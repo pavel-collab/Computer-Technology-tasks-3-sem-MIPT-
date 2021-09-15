@@ -1,4 +1,7 @@
 // Запись в файл
+//
+//
+//
 
 #include <stdint.h> // uint8_t
 #include <string.h>
