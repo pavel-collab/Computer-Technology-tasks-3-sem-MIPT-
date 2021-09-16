@@ -59,7 +59,6 @@ int main(int argc, char* argv[])
         return RESULT_OPEN_FAILED;
     }
 
-    // write с первого раза можт записать не все???
     if (writeall(fd, argv[2], strlen(argv[2])) < 0) {
         perror("Failed write to file");
         close(fd);
