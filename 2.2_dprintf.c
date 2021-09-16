@@ -53,3 +53,6 @@ int main(int argc, char* argv[])
 
     //return RESULT_OK;
 }
+
+// int dprintf(int fd, const char *format, ...);
+// The function dprintf() is the same as fprintf() except that it outputs to a file descriptor, fd, instead of to a stdio stream.

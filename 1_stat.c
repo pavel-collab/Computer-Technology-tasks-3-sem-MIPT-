@@ -27,7 +27,7 @@ char* get_UTC_time(char* str, const time_t* s_time) {
         return str;
     }
     else {
-        return 0;
+        exit(1);
     }
 }
 
@@ -82,6 +82,8 @@ int main(int argc, char *argv[])
     }
     #endif
 
+    printf("File:                     %s\n", argv[1]);
+
     // ID устройства состоит из 2х частей, которые содержатся в поле st_dev
     // функции major() и minor() возвращают эти части
 
@@ -103,6 +105,40 @@ int main(int argc, char *argv[])
     default:       puts("unknown?");                break;
     }
 
+    puts("==============================================");
+
+    printf("access rights: ");
+
+    //S_IRWXU    00700     маска для прав доступа пользователя
+
+    switch (sb.st_mode & S_IRWXU) {
+        case S_IRUSR: puts("00400");                  break;
+        case S_IWUSR: puts("00200");                  break;
+        case S_IXUSR: puts("00100");                  break;
+        default:      puts("Error");                  break;
+    }
+
+    //S_IRWXG    00070     маска для прав доступа группы
+
+    switch (sb.st_mode & S_IRWXG) {
+        case S_IRGRP: puts("               00040");                  break;
+        case S_IWGRP: puts("               00020");                  break;
+        case S_IXGRP: puts("               00010");                  break;
+        default:      puts("               Error");                  break;
+    }
+
+    //S_IRWXO    00007     маска прав доступа всех прочих (не находящихся в группе)
+
+    switch (sb.st_mode & S_IRWXO) {
+        case S_IROTH: puts("               00004");                  break;
+        case S_IWOTH: puts("               00002");                  break;
+        case S_IXOTH: puts("               00001");                  break;
+        default:      puts("               Error");                  break;
+    }
+
+    puts("==============================================");
+
+
     printf("I-node number:            %ld\n", (long) sb.st_ino);
 
     printf("Mode:                     %lo (octal)\n",
@@ -119,14 +155,6 @@ int main(int argc, char *argv[])
     printf("Blocks allocated:         %lld\n",
             (long long) sb.st_blocks);
 
-    /*
-    printf("Last status change:       %s", ctime(&sb.st_ctime));
-    printf("Last file access:         %s", ctime(&sb.st_atime));
-    printf("Last file modification:   %s", ctime(&sb.st_mtime));
-    */
-
-    puts("===============================================");
-
     //Строка для сохранения преобразованного времени
     char str_t[128] = "";
 
@@ -138,11 +166,12 @@ int main(int argc, char *argv[])
     return EXIT_SUCCESS;
 }
 
-//* прошарить код
-//===============================================================
-//* заменил exit() на return
-//* добавил флаги на выбор системных вызовов
+//TODO: разобарться с правами доступа -> man inode(7)
+//TODO: пересмотреть параметры strftime
 
+//TODO: man statx(2)
+
+//TODO: заполнить Readme по таску
 /*
 
 stat возвращает информацию о файле file_name и заполняет буфер buf. 
@@ -171,4 +200,18 @@ st_blocks;   количество выделенных блоков
 st_atime;    время последнего доступа
 st_mtime;    время последней модификации
 st_ctime;    время последнего изменения
+*/
+
+/*
+S_IRUSR    00400     пользователь имеет право чтения
+S_IWUSR    00200     пользователь имеет право записи
+S_IXUSR    00100     пользователь имеет право выполнения
+S_IRWXG    00070     маска для прав доступа группы
+S_IRGRP    00040     группа имеет права чтения
+S_IWGRP    00020     группа имеет права записи
+S_IXGRP    00010     группа имеет права выполнения
+S_IRWXO    00007     маска прав доступа всех прочих (не находящихся в группе)
+S_IROTH    00004     все прочие имеют права чтения
+S_IWOTH    00002     все прочие имеют права записи
+S_IXOTH    00001     все прочие имеют права выполнения
 */

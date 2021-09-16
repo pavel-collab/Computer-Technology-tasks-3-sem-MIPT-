@@ -40,3 +40,8 @@ int main(int argc, char* argv[]) {
 
     return RESULT_OK;
 }
+
+// open the first file, open the second file -> 
+// read from the first file                  -> 
+// write to the second file                  ->
+// sclose the first file, close the second file
