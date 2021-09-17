@@ -5,8 +5,6 @@
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 
-//===============================================================
-
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,6 +12,7 @@
 
 #define LSTAT_ONLY
 
+// считывает системное время и преобразует его в строку (время в UTC)
 char* get_UTC_time(char* str, const time_t* s_time) {
 
     //Указатель на структуру tm для хранения времени
@@ -105,39 +104,36 @@ int main(int argc, char *argv[])
     default:       puts("unknown?");                break;
     }
 
-    puts("==============================================");
+    // права доступа
 
-    printf("access rights: ");
+    int acccess_rights = 0;
 
-    //S_IRWXU    00700     маска для прав доступа пользователя
+    // см шпаргалку в Readme
 
-    switch (sb.st_mode & S_IRWXU) {
-        case S_IRUSR: puts("00400");                  break;
-        case S_IWUSR: puts("00200");                  break;
-        case S_IXUSR: puts("00100");                  break;
-        default:      puts("Error");                  break;
-    }
+    acccess_rights += sb.st_mode & S_IRUSR ? 400 : 0;
+    acccess_rights += sb.st_mode & S_IRGRP ? 40  : 0;
+    acccess_rights += sb.st_mode & S_IROTH ? 4   : 0;
 
-    //S_IRWXG    00070     маска для прав доступа группы
+    acccess_rights += sb.st_mode & S_IWUSR ? 200 : 0;
+    acccess_rights += sb.st_mode & S_IWGRP ? 20  : 0;
+    acccess_rights += sb.st_mode & S_IWOTH ? 2   : 0;
 
-    switch (sb.st_mode & S_IRWXG) {
-        case S_IRGRP: puts("               00040");                  break;
-        case S_IWGRP: puts("               00020");                  break;
-        case S_IXGRP: puts("               00010");                  break;
-        default:      puts("               Error");                  break;
-    }
+    acccess_rights += sb.st_mode & S_IXUSR ? 100 : 0;
+    acccess_rights += sb.st_mode & S_IXGRP ? 10  : 0;
+    acccess_rights += sb.st_mode & S_IXOTH ? 1   : 0;
 
-    //S_IRWXO    00007     маска прав доступа всех прочих (не находящихся в группе)
+    printf("access rights:            0%d/", acccess_rights);
 
-    switch (sb.st_mode & S_IRWXO) {
-        case S_IROTH: puts("               00004");                  break;
-        case S_IWOTH: puts("               00002");                  break;
-        case S_IXOTH: puts("               00001");                  break;
-        default:      puts("               Error");                  break;
-    }
-
-    puts("==============================================");
-
+    printf("%c%c%c%c%c%c%c%c%c\n",
+        sb.st_mode & S_IRUSR ? 'r' : '-',
+        sb.st_mode & S_IWUSR ? 'w' : '-',
+        sb.st_mode & S_IXUSR ? 'x' : '-',
+        sb.st_mode & S_IRGRP ? 'r' : '-',
+        sb.st_mode & S_IWGRP ? 'w' : '-',
+        sb.st_mode & S_IXGRP ? 'x' : '-',
+        sb.st_mode & S_IROTH ? 'r' : '-',
+        sb.st_mode & S_IWOTH ? 'w' : '-',
+        sb.st_mode & S_IXOTH ? 'x' : '-');
 
     printf("I-node number:            %ld\n", (long) sb.st_ino);
 
@@ -166,52 +162,7 @@ int main(int argc, char *argv[])
     return EXIT_SUCCESS;
 }
 
-//TODO: разобарться с правами доступа -> man inode(7)
+//* разобарться с правами доступа -> man inode(7)
 //TODO: пересмотреть параметры strftime
-
 //TODO: man statx(2)
-
 //TODO: заполнить Readme по таску
-/*
-
-stat возвращает информацию о файле file_name и заполняет буфер buf. 
-
-lstat идентична stat, но в случае символьных сылок она возвращает информацию о самой ссылке, а не о файле, на который она указывает.
-
-fstat идентична stat, только возвращается информация об открытом файле, на который указывает filedes (возвращаемый open(2)), а не о file_name. Вызов open() используется, чтобы преобразовать путь к файлу в описатель файла (небольшое неотрицательно целое число, которое используется с вызовами read, write и т.п. при последующем вводе-выводе).
-
-//===============================================================
-
-statx возвращает более полную информацию о файле. Информация записывается в труктуру struct statx
-
-*/
-
-/*
-st_dev;      устройство
-st_ino;      inode
-st_mode;     режим доступа
-st_nlink;    количество жестких ссылок
-st_uid;      ID пользователя-владельца
-st_gid;      ID группы-владельца
-st_rdev;     тип устройства
-st_size;     общий размер в байтах
-st_blksize;  размер блока ввода-вывода
-st_blocks;   количество выделенных блоков
-st_atime;    время последнего доступа
-st_mtime;    время последней модификации
-st_ctime;    время последнего изменения
-*/
-
-/*
-S_IRUSR    00400     пользователь имеет право чтения
-S_IWUSR    00200     пользователь имеет право записи
-S_IXUSR    00100     пользователь имеет право выполнения
-S_IRWXG    00070     маска для прав доступа группы
-S_IRGRP    00040     группа имеет права чтения
-S_IWGRP    00020     группа имеет права записи
-S_IXGRP    00010     группа имеет права выполнения
-S_IRWXO    00007     маска прав доступа всех прочих (не находящихся в группе)
-S_IROTH    00004     все прочие имеют права чтения
-S_IWOTH    00002     все прочие имеют права записи
-S_IXOTH    00001     все прочие имеют права выполнения
-*/
