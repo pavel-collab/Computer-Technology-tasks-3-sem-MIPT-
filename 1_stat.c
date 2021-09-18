@@ -10,8 +10,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define LSTAT_ONLY
-
 // считывает системное время и преобразует его в строку (время в UTC)
 char* get_UTC_time(char* str, const time_t* s_time) {
 
@@ -35,41 +33,6 @@ int main(int argc, char *argv[])
     // инициализируем структуру
     struct stat sb = {};
 
-    #ifndef LSTAT_ONLY
-
-    if (argc != 3) {
-        fprintf(stderr, "Usage: %s <pathname>\n", argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    // добавил флаги на выбор системных вызовов:
-    // "-s" stat
-    // "-l" istat
-    // "-f" fstat
-
-    
-    if (!strcmp(argv[1], "-s")) {
-        puts("using system call stat");
-        if (stat(argv[2], &sb) == -1) {
-            perror("stat");
-            return EXIT_FAILURE;
-        }
-    }
-    else if (!strcmp(argv[1], "-l")) {
-        puts("using system call lstat");
-        if (lstat(argv[2], &sb) == -1) {
-            perror("lstat");
-            return EXIT_FAILURE;
-        }
-    }
-    else if (!strcmp(argv[1], "-f")) {
-        puts("using system call fstat");
-        if (fstat(atoi(argv[2]), &sb) == -1) {
-            perror("fstat");
-            return EXIT_FAILURE;
-        }   
-    }
-    #else
     if (argc != 2) {
         fprintf(stderr, "Usage: %s <pathname>\n", argv[0]);
         exit(EXIT_FAILURE);
@@ -79,7 +42,6 @@ int main(int argc, char *argv[])
         perror("lstat");
         return EXIT_FAILURE;
     }
-    #endif
 
     printf("File:                     %s\n", argv[1]);
 
@@ -161,6 +123,10 @@ int main(int argc, char *argv[])
 
     return EXIT_SUCCESS;
 }
+
+//TODO: refactoring: man 3 printf
+//TODO: refactoring: function get_UTC_time
+//TODO: refactoring: опечатки в Readme????
 
 //* разобарться с правами доступа -> man inode(7)
 //TODO: пересмотреть параметры strftime

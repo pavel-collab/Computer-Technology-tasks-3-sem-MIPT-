@@ -1,4 +1,4 @@
-//Compile with: gcc -Wall -Wextra -o 3.1 3.1_copy_regular_fules.c
+//Compile with: gcc -Wall -Wextra -o 3.1_copy 3.1_copy_regular_fules.c
 
 #include <stdint.h> // uint8_t
 
@@ -78,18 +78,21 @@ int main(int argc, char* argv[]) {
         return RESULT_OPEN_FAILED;
     }
 
+    // узнаем размер файла в байтах
+    long long copy_file_size = (long long) sb.st_size;
+
     //? Можно ли вообще так делать?
     //void* buf = calloc(256, sizeof(void));
 
     char str[256] = "";
 
-    if (read(copy_file, &str, 256 * sizeof(char)) < 0) {
+    if (read(copy_file, &str, copy_file_size) < 0) {
         perror("Failed read from the file");
         close(copy_file);
         return RESULT_BAD_READ;
     }
 
-    if (writeall(destination_file, &str, 256 * sizeof(char)) < 0) {
+    if (writeall(destination_file, &str, copy_file_size) < 0) {
         perror("Failed write to file");
         close(destination_file);
         return RESULT_BAD_WRITE;
