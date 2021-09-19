@@ -24,7 +24,7 @@ char* get_UTC_time(char* str, const time_t* s_time) {
         return str;
     }
     else {
-        exit(1);
+        return NULL;
     }
 }
 

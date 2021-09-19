@@ -2,6 +2,9 @@
 *.exe
 *.vscode
 
+sundbox.c
+sundbox
+
 1_stat
 2.1_write
 2.2_dprintf
