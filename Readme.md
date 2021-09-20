@@ -59,12 +59,12 @@ ___
 
 ## Task 2.1 write.
 
-as soon as pissible
+as soon as possible
 
 ## Task 2.2 dprintf.
 
-as soon as pissible
+as soon as possible
 
 ## Task 3.1 the copy of regular files.
 
-as soon as pissible
+as soon as possible
