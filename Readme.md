@@ -68,3 +68,7 @@ as soon as possible
 ## Task 3.1 the copy of regular files.
 
 as soon as possible
+
+## Task 3.3
+
+pread, prwite используются заместо read + lseek, чтобы не делать 2 системных вызова для одного действия

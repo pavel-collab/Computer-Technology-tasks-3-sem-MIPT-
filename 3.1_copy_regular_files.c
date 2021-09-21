@@ -1,4 +1,4 @@
-//Compile with: gcc -Wall -Wextra -o 3.1_copy 3.1_copy_regular_files.c
+//* Compile with: gcc -Wall -Wextra -o 3.1_copy 3.1_copy_regular_files.c
 
 #include <stdint.h> // uint8_t
 
@@ -44,7 +44,7 @@ ssize_t writeall(int fd, const void *buf, size_t count) {
     return (ssize_t) bytes_written;
 }
 
-// the function of the removing fire from the dir
+// the function of the removing fire from the current dir
 int rm_file(char* filename) {
 
     // конкатенация строк
@@ -52,6 +52,7 @@ int rm_file(char* filename) {
 
     char command[512];
     snprintf(command, sizeof command, "%s%s", rm, filename);
+    // ----------------------------------------------------------------------------------------
 
     system(command);
     printf("[+] Successful removing: %s", filename);

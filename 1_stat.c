@@ -1,4 +1,4 @@
-//! Compile with gcc -Wall -Wextra -o 1_stat 1_stat.c
+//* Compile with gcc -Wall -Wextra -o 1_stat 1_stat.c
 
 // заголовочные файлы для вызова stat, lstat, fsltat
 #include <sys/types.h>
@@ -54,6 +54,7 @@ int main(int argc, char *argv[])
     printf("File type:                ");
 
     // маска S_IFMT путем побитового AND позволяет считывать только необходимые биты поля st_mode
+    // man 2 stat
 
     switch (sb.st_mode & S_IFMT) {
     case S_IFBLK:  puts("block device");            break;
@@ -67,26 +68,15 @@ int main(int argc, char *argv[])
     }
 
     // права доступа
+    // см шпаргалку в Readme или man 2 stat, man 2 lstat
 
-    int acccess_rights = 0;
+    // the first variant output access in octal sign
+    // printf("access        :            %o/", sb.st_mode & 1023);
 
-    // см шпаргалку в Readme
-
-    acccess_rights += sb.st_mode & S_IRUSR ? 400 : 0;
-    acccess_rights += sb.st_mode & S_IRGRP ? 40  : 0;
-    acccess_rights += sb.st_mode & S_IROTH ? 4   : 0;
-
-    acccess_rights += sb.st_mode & S_IWUSR ? 200 : 0;
-    acccess_rights += sb.st_mode & S_IWGRP ? 20  : 0;
-    acccess_rights += sb.st_mode & S_IWOTH ? 2   : 0;
-
-    acccess_rights += sb.st_mode & S_IXUSR ? 100 : 0;
-    acccess_rights += sb.st_mode & S_IXGRP ? 10  : 0;
-    acccess_rights += sb.st_mode & S_IXOTH ? 1   : 0;
-
-    //??????????????????????????????????????????????????????
-    printf("access rights:            0%d/", acccess_rights);
-
+    // the second variant output access in octal sign
+    printf("Режим доступа:            %lo (octal)/",
+            (unsigned long) sb.st_mode);
+            
     printf("%c%c%c%c%c%c%c%c%c\n",
         sb.st_mode & S_IRUSR ? 'r' : '-',
         sb.st_mode & S_IWUSR ? 'w' : '-',
