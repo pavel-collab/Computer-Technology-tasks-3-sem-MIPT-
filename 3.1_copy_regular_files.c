@@ -15,18 +15,9 @@
 
 #include <assert.h>
 
-const unsigned int MAX_LEN = 256;
+#include "enum.h"
 
-enum {
-    RESULT_OK = 0,
-    RESULT_BAD_ARG,
-    RESULT_BAD_FILE_TYPE,
-    RESULT_OPEN_FAILED, 
-    RESULT_BAD_READ,
-    RESULT_BAD_WRITE,
-    RESULT_BAD_CLOSE,
-    RESULT_BAD_FILE_DELETE
-};
+const unsigned int MAX_LEN = 256;
 
 ssize_t writeall(int fd, const void *buf, size_t count) {
     size_t bytes_written = 0;

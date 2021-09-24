@@ -18,18 +18,9 @@
 // go to man 2 pwrite
 #define _XOPEN_SOURCE 500
 
-const unsigned int MAX_LEN = 5;
+const unsigned int MAX_LEN = 256;
 
-enum {
-    RESULT_OK = 0,
-    RESULT_BAD_ARG,
-    RESULT_BAD_FILE_TYPE,
-    RESULT_OPEN_FAILED, 
-    RESULT_BAD_READ,
-    RESULT_BAD_WRITE,
-    RESULT_BAD_CLOSE,
-    RESULT_BAD_FILE_DELETE
-};
+#include "enum.h"
 
 ssize_t writeall(int fd, const void *buf, size_t count) {
     size_t bytes_written = 0;

@@ -10,15 +10,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-
-// именованые константы
-enum {
-    RESULT_OK = 0,
-    RESULT_BAD_ARG,
-    RESULT_OPEN_FAILED,
-    RESULT_BAD_CLOSE,
-    RESULT_BAD_WRITE
-};
+#include "enum.h"
 
 // size_t  -- беззнаковый
 // ssize_t -- знаковый
