@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
     }
 
     printf("File:                     %s\n", argv[1]);
-
+    
     // ID устройства состоит из 2х частей, которые содержатся в поле st_dev
     // функции major() и minor() возвращают эти части
 
@@ -106,12 +106,12 @@ int main(int argc, char *argv[])
 
     //Строка для сохранения преобразованного времени
     char str_t[128] = "";
-
+    
     //Выводим строку в консоль
     printf ("Last status change:       %s\n", get_UTC_time(str_t, &sb.st_ctime));
     printf ("Last file access:         %s\n", get_UTC_time(str_t, &sb.st_atime));
     printf ("Last file modification:   %s\n", get_UTC_time(str_t, &sb.st_mtime));
-
+        
     return EXIT_SUCCESS;
 }
 
