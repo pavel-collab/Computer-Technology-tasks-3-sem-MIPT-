@@ -74,3 +74,11 @@ as soon as possible
 pread, prwite используются заместо read + lseek, чтобы не делать 2 системных вызова для одного действия
 
 огласно POSIX требуется, чтобы открытие файла с флагом O_APPEND не влияло на расположение, по которому pwrite() записывает данные. Однако в Linux, если файл открывается с флагом O_APPEND, pwrite() добавляет данные в конец файла, независимо от значения offset.
+
+## Task 3*
+
+Use command
+```
+ln -s <filename> <linkname>
+```
+to  create a symlink.
