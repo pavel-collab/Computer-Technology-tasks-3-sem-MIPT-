@@ -5,9 +5,11 @@
 
 #include <sys/stat.h>
 #include <unistd.h>
+#include <assert.h>
 
+#include "enum.h"
 
-char mode_char(unsigned mode) {
+char file_mode(unsigned mode) {
 
     switch (mode & S_IFMT) {
         case S_IFBLK:  return 'b';   break;
@@ -43,16 +45,9 @@ char dtype_char(unsigned char dtype) {
 int main() {
     DIR *dir_fd = opendir(".");
 
-    // оптимистичная обработка
-    // if (dir_fd) {
-    //     // ...
-    //     closedir(dir_fd);
-    //     return 0;
-    // }
-
     if (!dir_fd) {
-        perror("open_dir");
-        return 1;
+        perror("Can't open current directory");
+        return RESULT_OPEN_FAILED;
     }
 
     struct dirent* entry;
@@ -61,16 +56,27 @@ int main() {
 
         char entry_type = dtype_char(entry->d_type);
 
+        struct stat sb;
+        assert((lstat(entry->d_name, &sb)) == 0);
+
+        printf("[%c%c%c%c%c%c%c%c%c] ",
+                sb.st_mode & S_IRUSR ? 'r' : '-',
+                sb.st_mode & S_IWUSR ? 'w' : '-',
+                sb.st_mode & S_IXUSR ? 'x' : '-',
+                sb.st_mode & S_IRGRP ? 'r' : '-',
+                sb.st_mode & S_IWGRP ? 'w' : '-',
+                sb.st_mode & S_IXGRP ? 'x' : '-',
+                sb.st_mode & S_IROTH ? 'r' : '-',
+                sb.st_mode & S_IWOTH ? 'w' : '-',
+                sb.st_mode & S_IXOTH ? 'x' : '-');
+
         if (entry_type == '?') {
-            struct stat sb;
-            if ((lstat(entry->d_name, &sb)) == 0) {
-                entry_type = mode_char(sb.st_mode);
-            }
+            entry_type = file_mode(sb.st_mode);
         }
 
         printf("%c %s\n", entry_type, entry->d_name);
     }
 
     closedir(dir_fd);
-    return 0;
+    return RESULT_OK;
 }
