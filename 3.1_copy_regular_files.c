@@ -38,17 +38,12 @@ ssize_t writeall(int fd, const void *buf, size_t count) {
 // the function of the removing fire from the current dir
 int rm_file(char* filename) {
 
-    // конкатенация строк
-    const char *rm  = "rm ";
-
-    char command[512];
-    snprintf(command, sizeof command, "%s%s", rm, filename);
-    // ----------------------------------------------------------------------------------------
-
-    system(command);
+    if (unlink(filename) == -1) {
+        perror("It's not possible to remove this file");
+        return RESULT_ERR;
+    }
     printf("[+] Successful removing: %s", filename);
-
-    return 0;
+    return RESULT_OK;
 }
 
 int copy_file(char* copy_file, char* destination_file) {
