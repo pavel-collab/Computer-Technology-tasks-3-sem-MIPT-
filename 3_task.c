@@ -55,28 +55,6 @@ int rm_file(char* filename) {
 }
 
 
-// int copy_link(char* sorse_link, char* new_link) {
-
-//     char* buf = (char*) calloc(buf_size, sizeof(char));
-
-//     if (readlink(sorse_link, buf, buf_size) < 0) {
-//         perror("It's not possible to read this link.");
-//         free(buf);
-//         return RESULT_BAD_READLINK;
-//     }
-
-//     printf("buf: %s\n", buf);
-
-//     if (symlink(new_link, buf) == -1) {
-//         perror("Some problem with the link copying.");
-//         free(buf);
-//         return RESULT_BAD_LINK_COPY;
-//     }
-
-//     free(buf);
-//     return RESULT_OK;
-// }
-
 int copy_file(char* copy_file, char* destination_file) {
 
     int cp_file   = open(copy_file, O_RDONLY);
@@ -103,7 +81,6 @@ int copy_file(char* copy_file, char* destination_file) {
 
     // узнаем размер файла в байтах
     long long copy_file_size = (long long) sb.st_size;
-    // printf("copy file size = %lld bytes\n", copy_file_size);
 
     char* buf = (char*) calloc(MAX_LEN, sizeof(char));
     assert(buf != NULL);
@@ -160,13 +137,6 @@ int copy_file(char* copy_file, char* destination_file) {
     //? Но правильно ли я это сделал?
     fchmod(dstn_file, sb.st_mode);
 
-    // if (chown (destination_file, sb.st_uid, sb.st_gid) == -1) {
-    //     perror("Bad chown");
-    //     rm_file(destination_file);
-    //     close(dstn_file);
-    //     return RESULT_ERR;
-    // }
-
     if (close(cp_file) < 0) {
         perror("Failed close copy file.");
         return RESULT_BAD_CLOSE;
@@ -203,12 +173,6 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    // switch (sb.st_mode & S_IFMT) {
-    //     case S_IFLNK:  copy_link(argv[1], argv[2]);                                break;
-    //     case S_IFREG:  copy_file(argv[1], argv[2]);                                break;
-    //     default: puts("[err] Sorry, I can't copy this type of file this moment("); break;
-    // }
-
     // спомощью stat проверяем тип файла
     if ((sb.st_mode & S_IFMT) != S_IFREG) {
         puts("[err] Sorry, I can't copy this type of file this moment(");
@@ -223,6 +187,14 @@ int main(int argc, char* argv[]) {
 //! Когда мы копируем файл, мы "трогаем его", поэтому время доступа меняется на текущую дату,
 //! а в копию мы записываем "старое" значение времени доступа
 //! как итог, совпадает только время модификации
+//* read man 2 open -> как открыть файл, чтобы его не "потрограть" искать по a_time
+//* man 2 unlink -> удалить ссылку на объект, когда количесво ссылок упадет до 0 
+//* система сама подберет мусор --- что это значит?
+
+//* посмотреть, какие системные вызовы дергает утилита remove
+//! читать полностью маны на chown and chmod!!!
+
+//* если копировать собственные файлы, то в chown нет никакого смысла.
 
 //? mknode
 //? mkfifo

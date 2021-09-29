@@ -1,5 +1,8 @@
 //* Compile with: gcc -Wall -Wextra -o 3.2_task 3.2_task.c
 
+// go to man 2 pwrite
+#define _XOPEN_SOURCE 500
+
 #include <stdint.h> // uint8_t
 
 #include <fcntl.h>
@@ -14,9 +17,6 @@
 #include <sys/sysmacros.h>
 
 #include <assert.h>
-
-// go to man 2 pwrite
-#define _XOPEN_SOURCE 500
 
 const unsigned int MAX_LEN = 256;
 
@@ -80,7 +80,6 @@ int copy_file(char* copy_file, char* destination_file) {
 
     // узнаем размер файла в байтах
     long long copy_file_size = (long long) sb.st_size;
-    // printf("copy file size = %lld bytes\n", copy_file_size);
 
     char* buf = (char*) calloc(MAX_LEN, sizeof(char));
     assert(buf != NULL);
@@ -109,7 +108,6 @@ int copy_file(char* copy_file, char* destination_file) {
         }
 
         ssize_t write_symb_amount = write(dstn_file, buf, read_symb_amount);
-        // ssize_t write_symb_amount = writeall(dstn_file, buf, read_symb_amount);
 
         if (write_symb_amount < 0) {
             perror("Failed write to file");
