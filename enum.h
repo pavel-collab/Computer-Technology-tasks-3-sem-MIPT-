@@ -12,3 +12,4 @@ enum {
     RESULT_BAD_LINK_COPY,
     RESULT_ERR
 };
+
