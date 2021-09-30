@@ -10,7 +10,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-// считывает системное время и преобразует его в строку (время в UTC)
+// размер буфера для форматного вывода времени в консоль
+// четверть блока
+unsigned int BUF_SIZE = 256;
+
+// считывает системное время и преобразует его в строку; время выводится в UTC
 char* get_UTC_time(char* str, const time_t* s_time) {
 
     //Указатель на структуру tm для хранения времени
@@ -19,19 +23,28 @@ char* get_UTC_time(char* str, const time_t* s_time) {
     //считываем системное время и преобразуем системное время в UTC!!!!
     tm_time = gmtime(s_time);
 
-    //Преобразуем время в текстовую строку
-    if (strftime (str, 128, "%x %A %X (UTC)", tm_time) > 0) {
-        return str;
-    }
-    else {
-        return NULL;
+    return (strftime (str, BUF_SIZE, "%x %A %X (UTC)", tm_time) > 0) ? str : NULL;
+
+}
+
+char* file_type(unsigned mode) {
+    // маска S_IFMT путем побитового AND позволяет считывать только необходимые биты поля st_mode
+    // man 2 stat
+    switch (mode & S_IFMT) {
+        case S_IFBLK:  return "block device";            break;
+        case S_IFCHR:  return "character device";        break;
+        case S_IFDIR:  return "directory";               break;
+        case S_IFIFO:  return "FIFO/pipe";               break;
+        case S_IFLNK:  return "symlink";                 break;
+        case S_IFREG:  return "regular file";            break;
+        case S_IFSOCK: return "socket";                  break;
+        default:       return "unknown?";                break;
     }
 }
 
 int main(int argc, char *argv[])
 {
-    // инициализируем структуру
-    struct stat sb = {};
+    struct stat sb;
 
     if (argc != 2) {
         fprintf(stderr, "Usage: %s <pathname>\n", argv[0]);
@@ -51,21 +64,7 @@ int main(int argc, char *argv[])
     printf("ID of containing device:  [%lx,%lx]\n",
                     (long) major(sb.st_dev), (long) minor(sb.st_dev));
 
-    printf("File type:                ");
-
-    // маска S_IFMT путем побитового AND позволяет считывать только необходимые биты поля st_mode
-    // man 2 stat
-
-    switch (sb.st_mode & S_IFMT) {
-    case S_IFBLK:  puts("block device");            break;
-    case S_IFCHR:  puts("character device");        break;
-    case S_IFDIR:  puts("directory");               break;
-    case S_IFIFO:  puts("FIFO/pipe");               break;
-    case S_IFLNK:  puts("symlink");                 break;
-    case S_IFREG:  puts("regular file");            break;
-    case S_IFSOCK: puts("socket");                  break;
-    default:       puts("unknown?");                break;
-    }
+    printf("File type:                %s\n", file_type(sb.st_mode));    
 
     // права доступа
     // см шпаргалку в Readme или man 2 stat, man 2 lstat
@@ -105,21 +104,13 @@ int main(int argc, char *argv[])
             (long long) sb.st_blocks);
 
     //Строка для сохранения преобразованного времени
-    char str_t[128] = "";
+    char* str_t = (char*) calloc(BUF_SIZE, sizeof(char));
     
     //Выводим строку в консоль
     printf ("Last status change:       %s\n", get_UTC_time(str_t, &sb.st_ctime));
     printf ("Last file access:         %s\n", get_UTC_time(str_t, &sb.st_atime));
     printf ("Last file modification:   %s\n", get_UTC_time(str_t, &sb.st_mtime));
+    free(str_t);
         
     return EXIT_SUCCESS;
 }
-
-//TODO: refactoring: man 3 printf
-//TODO: refactoring: function get_UTC_time
-//TODO: refactoring: опечатки в Readme????
-
-//* разобарться с правами доступа -> man inode(7)
-//TODO: пересмотреть параметры strftime
-//TODO: man statx(2)
-//TODO: заполнить Readme по таску

@@ -20,7 +20,6 @@ int main(int argc, char* argv[])
 {
     if (argc != 3) {
         fprintf(stderr, "Usage: %s filename text-to-write\n", argv[0]);
-        //puts("Expect more arguments.");
         return RESULT_BAD_ARG;
     }
 
@@ -33,7 +32,7 @@ int main(int argc, char* argv[])
     }
 
     if (dprintf(fd, "%s", argv[2]) < 0) {
-        //perror("Failed write to file");
+        perror("Failed write to file");
         close(fd);
         return RESULT_BAD_WRITE;
     }
@@ -43,7 +42,7 @@ int main(int argc, char* argv[])
         return RESULT_BAD_CLOSE;
     }
 
-    //return RESULT_OK;
+    return RESULT_OK;
 }
 
 // int dprintf(int fd, const char *format, ...);

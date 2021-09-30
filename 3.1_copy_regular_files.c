@@ -17,7 +17,7 @@
 
 #include "enum.h"
 
-const unsigned int MAX_LEN = 256;
+const unsigned int MAX_LEN = 4096;
 
 ssize_t writeall(int fd, const void *buf, size_t count) {
     size_t bytes_written = 0;
@@ -49,14 +49,13 @@ int rm_file(char* filename) {
 int copy_file(char* copy_file, char* destination_file) {
 
     int cp_file   = open(copy_file, O_RDONLY);
-    int dstn_file = open(destination_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-
     if (cp_file < 0) {
         perror("Failed for open copy file for writing");
         rm_file(destination_file);
         return RESULT_OPEN_FAILED;
     }
 
+    int dstn_file = open(destination_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (dstn_file < 0) {
         perror("Failed for open destination file for writing");
         rm_file(destination_file);
@@ -132,7 +131,7 @@ int main(int argc, char* argv[]) {
 
     if (argc != 3) {
         fprintf(stderr, "Usage: %s filename text-to-write\n", argv[0]);
-        puts("[err] Error message.");
+        perror("[err] Error message.");
         return RESULT_BAD_ARG;
     }
 
@@ -146,7 +145,7 @@ int main(int argc, char* argv[]) {
 
     // спомощью stat проверяем тип файла
     if ((sb.st_mode & S_IFMT) != S_IFREG) {
-        puts("[err] Sorry, I can't copy this type of file this moment(");
+        perror("[err] Sorry, I can't copy this type of file this moment(");
         return RESULT_BAD_FILE_TYPE;
     }
 
