@@ -1,4 +1,5 @@
-// #define _GNU_SOURCE
+//* Compile with gcc -Wall -Wextra -o version2 version2.c
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <dirent.h>
@@ -10,7 +11,7 @@
 #include <unistd.h>
 
 #include <assert.h>
-#include "enum.h"
+#include "../enum.h"
 
 #include <dirent.h>
 

@@ -1,4 +1,4 @@
-//* Compile with: gcc -Wall -Wextra -o 3.1_copy 3.1_copy_regular_files.c
+//* Compile with gcc -Wall -Wextra -o out main.c
 
 #include <stdint.h> // uint8_t
 
@@ -15,9 +15,12 @@
 
 #include <assert.h>
 
-#include "enum.h"
+#include <utime.h>
 
-const unsigned int MAX_LEN = 4096;
+const unsigned int MAX_LEN = 256;
+const size_t buf_size = 256;
+
+#include "../enum.h"
 
 ssize_t writeall(int fd, const void *buf, size_t count) {
     size_t bytes_written = 0;
@@ -38,24 +41,31 @@ ssize_t writeall(int fd, const void *buf, size_t count) {
 // the function of the removing fire from the current dir
 int rm_file(char* filename) {
 
-    if (unlink(filename) == -1) {
-        perror("It's not possible to remove this file");
-        return RESULT_ERR;
-    }
+    // конкатенация строк
+    const char *rm  = "rm ";
+
+    char command[512];
+    snprintf(command, sizeof command, "%s%s", rm, filename);
+    // ----------------------------------------------------------------------------------------
+
+    system(command);
     printf("[+] Successful removing: %s", filename);
-    return RESULT_OK;
+
+    return 0;
 }
+
 
 int copy_file(char* copy_file, char* destination_file) {
 
     int cp_file   = open(copy_file, O_RDONLY);
+    int dstn_file = open(destination_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+
     if (cp_file < 0) {
         perror("Failed for open copy file for writing");
         rm_file(destination_file);
         return RESULT_OPEN_FAILED;
     }
 
-    int dstn_file = open(destination_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (dstn_file < 0) {
         perror("Failed for open destination file for writing");
         rm_file(destination_file);
@@ -71,7 +81,6 @@ int copy_file(char* copy_file, char* destination_file) {
 
     // узнаем размер файла в байтах
     long long copy_file_size = (long long) sb.st_size;
-    // printf("copy file size = %lld bytes\n", copy_file_size);
 
     char* buf = (char*) calloc(MAX_LEN, sizeof(char));
     assert(buf != NULL);
@@ -107,6 +116,27 @@ int copy_file(char* copy_file, char* destination_file) {
 
     }
 
+    // инициализируем структуру
+    struct utimbuf file_time_buf = {};
+
+    // кладем в стуктуру время доступа и модификации исходного файла
+    file_time_buf.actime = sb.st_atime;
+    file_time_buf.modtime = sb.st_mtime;
+
+    // присваиваем новому файлу параметры времени исходника
+    if (utime(destination_file, &file_time_buf) != 0) {
+        perror("Error, impossible to assign the values of access time and modefite time.");
+        rm_file(destination_file);
+        close(dstn_file);
+        return RESULT_BAD_COPY_TIME;
+    }
+
+    //-----------------------------------------------------------------------------------------
+    
+    //? Ура, теперь я могу копировать исполняемые файлы
+    //? Но правильно ли я это сделал?
+    fchmod(dstn_file, sb.st_mode);
+
     if (close(cp_file) < 0) {
         perror("Failed close copy file.");
         return RESULT_BAD_CLOSE;
@@ -131,7 +161,7 @@ int main(int argc, char* argv[]) {
 
     if (argc != 3) {
         fprintf(stderr, "Usage: %s filename text-to-write\n", argv[0]);
-        perror("[err] Error message.");
+        puts("[err] Error message.");
         return RESULT_BAD_ARG;
     }
 
@@ -145,7 +175,7 @@ int main(int argc, char* argv[]) {
 
     // спомощью stat проверяем тип файла
     if ((sb.st_mode & S_IFMT) != S_IFREG) {
-        perror("[err] Sorry, I can't copy this type of file this moment(");
+        puts("[err] Sorry, I can't copy this type of file this moment(");
         return RESULT_BAD_FILE_TYPE;
     }
 
@@ -154,9 +184,19 @@ int main(int argc, char* argv[]) {
     return RESULT_OK;
 }
 
-//ssize_t read(int fd, void *buf, size_t count);
+//! Когда мы копируем файл, мы "трогаем его", поэтому время доступа меняется на текущую дату,
+//! а в копию мы записываем "старое" значение времени доступа
+//! как итог, совпадает только время модификации
+//* read man 2 open -> как открыть файл, чтобы его не "потрограть" искать по a_time
+//* man 2 unlink -> удалить ссылку на объект, когда количесво ссылок упадет до 0 
+//* система сама подберет мусор --- что это значит?
 
-// open the first file, open the second file -> 
-// read from the first file                  -> 
-// write to the second file                  ->
-// sclose the first file, close the second file
+//* посмотреть, какие системные вызовы дергает утилита remove
+//! читать полностью маны на chown and chmod!!!
+
+//* если копировать собственные файлы, то в chown нет никакого смысла.
+
+//? mknode
+//? mkfifo
+// считываем содержимое ссылки с помощью readlink
+// и записываем ее содержимое в новую ссылку с помощью symlink

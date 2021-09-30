@@ -5,14 +5,7 @@
 sundbox.c
 sundbox
 
-1_stat
-2.1_write
-2.2_dprintf
-3.1_copy
-3.2_task
-copy
-6.1_task
-6.2_task
+out
 
 test.txt
 test1.txt

@@ -1,4 +1,4 @@
-//* Compile with gcc -Wall -Wextra -o 1_stat 1_stat.c
+//* Compile with gcc -Wall -Wextra -o out main.c
 
 // заголовочные файлы для вызова stat, lstat, fsltat
 #include <sys/types.h>

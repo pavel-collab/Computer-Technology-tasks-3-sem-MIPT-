@@ -1,4 +1,4 @@
-// Запись в файл
+//* Compile with gcc -Wall -Wextra -o out main.c
 
 #include <stdint.h> // uint8_t
 #include <string.h>
@@ -10,7 +10,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "enum.h"
+#include "../enum.h"
 
 // size_t  -- беззнаковый
 // ssize_t -- знаковый

@@ -1,3 +1,5 @@
+//* Compile with gcc -Wall -Wextra -o out main.c
+
 #include <stdio.h>
 #include <dirent.h>
 
@@ -5,9 +7,10 @@
 
 #include <sys/stat.h>
 #include <unistd.h>
-#include <assert.h>
 
-#include "enum.h"
+#include <assert.h>
+#include "../enum.h"
+
 
 char file_mode(unsigned mode) {
 
@@ -42,15 +45,27 @@ char dtype_char(unsigned char dtype) {
     return '?';
 }
 
-int main() {
-    DIR *dir_fd = opendir(".");
+int main(int argc, char* argv[]) {
 
+    char* dir_name = ".";
+    if (argc == 2) {
+        dir_name = argv[1];
+    }
+
+    if (chdir(dir_name) < 0) {
+        perror("It's not possible to change directory now");
+        return RESULT_ERR;
+    }
+
+    DIR *dir_fd = opendir(dir_name);
+    
     if (!dir_fd) {
-        perror("Can't open current directory");
-        return RESULT_OPEN_FAILED;
+        perror("Bad directory ");
+        return RESULT_ERR;
     }
 
     struct dirent* entry;
+    printf("dir: %s\n\n", dir_name);
 
     while ((entry = readdir(dir_fd)) != NULL) {
 
@@ -78,5 +93,5 @@ int main() {
     }
 
     closedir(dir_fd);
-    return RESULT_OK;
+    return 0;
 }

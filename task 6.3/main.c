@@ -1,3 +1,5 @@
+//* Compile with gcc -Wall -Wextra -o out main.c
+
 #define _XOPEN_SOURCE_EXTENDED
 #include <stdlib.h>
 #include <stdio.h>
@@ -10,7 +12,7 @@
 #include <unistd.h>
 
 #include <assert.h>
-#include "enum.h"
+#include "../enum.h"
 
 #include <dirent.h>
 #include <string.h>

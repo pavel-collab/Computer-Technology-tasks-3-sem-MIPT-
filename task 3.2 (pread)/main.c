@@ -1,4 +1,4 @@
-//* Compile with: gcc -Wall -Wextra -o 3.2_task 3.2_task.c
+//* Compile with gcc -Wall -Wextra -o out main.c
 
 // go to man 2 pwrite
 #define _XOPEN_SOURCE 500
@@ -20,7 +20,7 @@
 
 const unsigned int MAX_LEN = 256;
 
-#include "enum.h"
+#include "../enum.h"
 
 ssize_t writeall(int fd, const void *buf, size_t count) {
     size_t bytes_written = 0;
