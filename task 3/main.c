@@ -54,6 +54,23 @@ int rm_file(char* filename) {
     return 0;
 }
 
+int CheckUserAccess(char* file_name, char access) {
+
+    struct stat sb = {};
+
+    if (lstat(file_name, &sb) == -1) {
+        perror("lstat");
+        return EXIT_FAILURE;
+    }
+
+    switch (access) {
+        case 'r': return (sb.st_mode & S_IRUSR) ? 1 : 0;
+        case 'w': return (sb.st_mode & S_IWUSR) ? 1 : 0;
+        case 'x': return (sb.st_mode & S_IXUSR) ? 1 : 0;
+        default:  return -1;
+    }
+}
+
 
 int copy_file(char* copy_file, char* destination_file) {
 
@@ -70,6 +87,18 @@ int copy_file(char* copy_file, char* destination_file) {
         perror("Failed for open destination file for writing");
         rm_file(destination_file);
         return RESULT_OPEN_FAILED;
+    }
+
+    if (CheckUserAccess(copy_file, 'r') != 1) {
+        fprintf(stderr, "Usage: %s filename\n", copy_file);
+        perror("This file can't be read");
+        return RESULT_BAD_READ;
+    }
+
+    if (CheckUserAccess(destination_file, 'w') != 1) {
+        fprintf(stderr, "Usage: %s filename\n", destination_file);
+        perror("This file can't be written in");
+        return RESULT_BAD_WRITE;
     }
 
     struct stat sb = {};
@@ -132,10 +161,6 @@ int copy_file(char* copy_file, char* destination_file) {
     }
 
     //-----------------------------------------------------------------------------------------
-    
-    //? Ура, теперь я могу копировать исполняемые файлы
-    //? Но правильно ли я это сделал?
-    fchmod(dstn_file, sb.st_mode);
 
     if (close(cp_file) < 0) {
         perror("Failed close copy file.");
