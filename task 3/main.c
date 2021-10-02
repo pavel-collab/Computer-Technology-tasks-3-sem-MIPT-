@@ -74,7 +74,8 @@ int CheckUserAccess(char* file_name, char access) {
 
 int copy_file(char* copy_file, char* destination_file) {
 
-    int cp_file   = open(copy_file, O_RDONLY);
+    // флаг __O_NOATIME используется, чтобы при открытии файла время доступа к нему не менялось
+    int cp_file   = open(copy_file, O_RDONLY | __O_NOATIME);
     int dstn_file = open(destination_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 
     if (cp_file < 0) {
@@ -149,7 +150,7 @@ int copy_file(char* copy_file, char* destination_file) {
     struct utimbuf file_time_buf = {};
 
     // кладем в стуктуру время доступа и модификации исходного файла
-    file_time_buf.actime = sb.st_atime;
+    file_time_buf.actime  = sb.st_atime;
     file_time_buf.modtime = sb.st_mtime;
 
     // присваиваем новому файлу параметры времени исходника
@@ -209,16 +210,7 @@ int main(int argc, char* argv[]) {
     return RESULT_OK;
 }
 
-//! Когда мы копируем файл, мы "трогаем его", поэтому время доступа меняется на текущую дату,
-//! а в копию мы записываем "старое" значение времени доступа
-//! как итог, совпадает только время модификации
-//* read man 2 open -> как открыть файл, чтобы его не "потрограть" искать по a_time
-//* man 2 unlink -> удалить ссылку на объект, когда количесво ссылок упадет до 0 
-//* система сама подберет мусор --- что это значит?
-
-//* посмотреть, какие системные вызовы дергает утилита remove
 //! читать полностью маны на chown and chmod!!!
-
 //* если копировать собственные файлы, то в chown нет никакого смысла.
 
 //? mknode
