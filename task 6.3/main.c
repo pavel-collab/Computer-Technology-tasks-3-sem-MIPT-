@@ -94,6 +94,12 @@ char* GetCurrentDirPath(char* buf, unsigned buf_size) {
     return getcwd_result;
 }
 
+void PrintLevel(int level) {
+    while (level-- > 0) {
+        printf("-");
+    }
+}
+
 int SearchDir(char* dir_name, int level) {
 
     int sys_dir_fd = open(dir_name, O_RDONLY);
@@ -124,7 +130,8 @@ int SearchDir(char* dir_name, int level) {
         assert(buf != NULL);
 
         GetAccess(sb.st_mode, buf);
-        printf("%*s ", (int) (level + strlen(buf)), buf);
+        PrintLevel(level);
+        printf(" | %s ", buf);
         free(buf);
 
         if (entry_type == '?') {
