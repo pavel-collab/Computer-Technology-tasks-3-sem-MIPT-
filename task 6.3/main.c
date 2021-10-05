@@ -1,6 +1,10 @@
 //* Compile with gcc -Wall -Wextra -o out main.c
 
 #define _XOPEN_SOURCE_EXTENDED
+// в каталоге .git хранится много файлов, при тестировании таска они засоряют вывод
+// чтобы выводить содердимое .git раскомментируйте define и пересоберите таск
+// #define DOT_GIT_VEIW
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <dirent.h>
@@ -70,6 +74,34 @@ void PrintLevel(int level) {
     }
 }
 
+int PrintDir(char* buf, char entry_type, char* file_name, int level) {
+    PrintLevel(level);
+    fprintf(stdout, " | %s %c %s\n", buf, entry_type, file_name);
+    return RESULT_OK;
+}
+
+int CheckFile(char entry_type, char* dr_name, mode_t mode) {
+    if (entry_type != 'd') {
+        return NOT_DIR;
+    }
+
+    if (!(mode & S_IRUSR)) {
+        return RESULT_BAD_READ;
+    }
+
+    if ((strcmp(dr_name, "..")) && (strcmp(dr_name, "."))) {
+        #ifdef DOT_GIT_VEIW
+            return SUITABLE_DIR;
+        #else
+            if (strcmp(dr_name, ".git")) {
+                return SUITABLE_DIR;
+            }
+        #endif
+    }
+
+    return -1;
+}
+
 int SearchDir(int sys_dir_fd, int level) {
 
     DIR* dir_fd = fdopendir(sys_dir_fd);
@@ -80,7 +112,6 @@ int SearchDir(int sys_dir_fd, int level) {
     }
 
     struct dirent* entry;
-    // printf("dir: %s\n\n", dir_name);
 
     while ((entry = readdir(dir_fd)) != NULL) {
 
@@ -89,25 +120,19 @@ int SearchDir(int sys_dir_fd, int level) {
         struct stat sb;
         assert((fstatat(sys_dir_fd, entry->d_name, &sb, AT_SYMLINK_NOFOLLOW)) == 0);
 
-        char* buf = (char*) calloc(9, sizeof(char));
-        assert(buf != NULL);
-        GetAccess(sb.st_mode, buf);
-
-        PrintLevel(level);
-        printf(" | %s ", buf);
-
-        free(buf);
-
         if (entry_type == '?') {
             entry_type = file_mode(sb.st_mode);
         }
 
-        printf("%c %s\n", entry_type, entry->d_name);
+        char* buf = (char*) calloc(9, sizeof(char));
+        assert(buf != NULL);
+        GetAccess(sb.st_mode, buf);
 
-        // !!! обработать!
-        if ((entry_type == 'd') && (strcmp(entry->d_name, "..")) && (strcmp(entry->d_name, ".")) && (strcmp(entry->d_name, ".git"))) {
-            // printf("CATCH A NEW DIR: %s\n\n", entry->d_name);
+        PrintDir(buf, entry_type, entry->d_name, level);
 
+        free(buf);
+
+        if (CheckFile(entry_type, entry->d_name, sb.st_mode) == SUITABLE_DIR) {
             int lowl_dir_fd = openat(sys_dir_fd, entry->d_name, O_RDONLY);
 
             level+=4;
