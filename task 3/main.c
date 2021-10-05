@@ -71,7 +71,6 @@ int CheckUserAccess(char* file_name, char access) {
     }
 }
 
-
 int copy_file(char* copy_file, char* destination_file) {
 
     // флаг __O_NOATIME используется, чтобы при открытии файла время доступа к нему не менялось

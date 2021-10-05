@@ -64,50 +64,13 @@ void GetAccess(unsigned st_mode, char* buf) {
     buf[8] = st_mode & S_IXOTH ? 'x' : '-';
 }
 
-char* GetCurrentDirPath(char* buf, unsigned buf_size) {
-
-    // unsigned buf_size = PATH_MAX;
-    // char* buf = (char*) malloc(buf_size);
-    // assert(buf != NULL);
-
-    // strcpy(buf, dir_name); // скопировать строку dir_name в buf
-
-    char* getcwd_result = getcwd(buf, buf_size);
-
-    // если получилось так, что абсолютный путь к текущему каталогу
-    // больше buf_size, расширяем буфер до тех пор,
-    // пока абсолютный путь к текущему каталогу не влезет в него
-    while ((getcwd_result == NULL) && (errno == ERANGE)) {
-        buf_size = buf_size * 2;
-        buf = (char*) realloc(buf, buf_size * sizeof(char));
-
-        getcwd_result = getcwd(buf, buf_size);
-    }
-
-    // если после этого функция все еще возвращает NULL, 
-    // значит имеют место ошибки другого характера
-    if (getcwd_result == NULL) {
-        perror("Can't get dir path");
-        free(buf);
-        return NULL;
-    }
-    return getcwd_result;
-}
-
 void PrintLevel(int level) {
     while (level-- > 0) {
         printf("-");
     }
 }
 
-int SearchDir(char* dir_name, int level) {
-
-    int sys_dir_fd = open(dir_name, O_RDONLY);
-
-    if (sys_dir_fd < 0) {
-        perror("Failed for open file");
-        return RESULT_OPEN_FAILED;
-    }
+int SearchDir(int sys_dir_fd, int level) {
 
     DIR* dir_fd = fdopendir(sys_dir_fd);
     //puts("DIR* dir_fd = opendir(dir_name);");
@@ -128,10 +91,11 @@ int SearchDir(char* dir_name, int level) {
 
         char* buf = (char*) calloc(9, sizeof(char));
         assert(buf != NULL);
-
         GetAccess(sb.st_mode, buf);
+
         PrintLevel(level);
         printf(" | %s ", buf);
+
         free(buf);
 
         if (entry_type == '?') {
@@ -140,29 +104,16 @@ int SearchDir(char* dir_name, int level) {
 
         printf("%c %s\n", entry_type, entry->d_name);
 
+        // !!! обработать!
         if ((entry_type == 'd') && (strcmp(entry->d_name, "..")) && (strcmp(entry->d_name, ".")) && (strcmp(entry->d_name, ".git"))) {
             // printf("CATCH A NEW DIR: %s\n\n", entry->d_name);
 
-            if (chdir(entry->d_name) < 0) {
-                perror("It's not possible to change directory now");
-                return RESULT_ERR;
-            }
+            int lowl_dir_fd = openat(sys_dir_fd, entry->d_name, O_RDONLY);
 
-            char* buf = (char*) calloc(PATH_MAX, sizeof(char));
-            char* abs_dir_path = GetCurrentDirPath(buf, PATH_MAX);
-            assert(abs_dir_path != NULL);
-
-            // printf("current dir: [%s]\n", abs_dir_path);
-            
             level+=4;
-            SearchDir(abs_dir_path, level);
+            SearchDir(lowl_dir_fd, level);
             level-=4;
-            free(buf);
-
-            if (chdir("..") < 0) {
-                perror("It's not possible to change directory now");
-                return RESULT_ERR;
-            }
+            close(lowl_dir_fd);
         }
     }
 
@@ -175,13 +126,14 @@ int main(int argc, char* argv[]) {
     char* dir_name = ".";
     if (argc == 2) {
         dir_name = argv[1];
-
-        if (chdir(dir_name) < 0) {
-            perror("It's not possible to change directory now");
-            return RESULT_ERR;
-        }
+    }
+    int sys_dir_fd = open(dir_name, O_RDONLY);
+    if (sys_dir_fd < 0) {
+        perror("Failed for open file");
+        return RESULT_OPEN_FAILED;
     }
 
-    SearchDir(dir_name, 0);   
+    SearchDir(sys_dir_fd, 0); 
+    close(sys_dir_fd);  
     return 0;
 }
