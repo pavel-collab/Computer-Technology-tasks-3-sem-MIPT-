@@ -3,25 +3,22 @@
 #define _XOPEN_SOURCE_EXTENDED
 // в каталоге .git хранится много файлов, при тестировании таска они засоряют вывод
 // чтобы выводить содердимое .git раскомментируйте define и пересоберите таск
+
 // #define DOT_GIT_VEIW
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <dirent.h>
-
 #include <sys/types.h>
-
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-
 #include <assert.h>
-#include "../enum.h"
-
 #include <dirent.h>
 #include <string.h>
-
 #include <errno.h>
+
+#include "../enum.h"
 
 char file_mode(unsigned mode) {
 
@@ -69,27 +66,32 @@ void get_access(unsigned st_mode, char* buf) {
     buf[8] = st_mode & S_IXOTH ? 'x' : '-';
 }
 
+// (оформление) функция печатает отступы в соответсвии с вложенностью файла
 void PrintLevel(int level) {
     while (level-- > 0) {
         printf("-");
     }
 }
 
+// вывод дериктории в консоль
 int PrintDir(char* buf, char entry_type, char* file_name, int level) {
     PrintLevel(level);
     fprintf(stdout, " | %s %c %s\n", buf, entry_type, file_name);
     return RESULT_OK;
 }
 
-int CheckFile(char entry_type, char* dr_name, mode_t mode) {
+// функция проверяет, можно ли безопасно читать данный каталог
+int check_dir(char entry_type, char* dr_name, mode_t mode) {
+    // проверяем, что имеем дело с каталогом
     if (entry_type != 'd') {
         return NOT_DIR;
     }
-
+    // проверяем право на чтение
     if (!(mode & S_IRUSR)) {
         return RESULT_BAD_READ;
     }
 
+    // проверяем, что это не текущий и не родительский каталог
     if ((strcmp(dr_name, "..")) && (strcmp(dr_name, "."))) {
         #ifdef DOT_GIT_VEIW
             return SUITABLE_DIR;
@@ -105,20 +107,20 @@ int CheckFile(char entry_type, char* dr_name, mode_t mode) {
 
 int SearchDir(int sys_dir_fd, int level) {
 
+    // получаем C-шный файловый дескриптор из системного
     DIR* dir_fd = fdopendir(sys_dir_fd);
-    //puts("DIR* dir_fd = opendir(dir_name);");
+
     if (dir_fd == NULL) {
         perror("Bad dir file descriptor");
         return RESULT_ERR;
     }
 
     struct dirent* entry;
+    struct stat sb;
 
     while ((entry = readdir(dir_fd)) != NULL) {
 
         char entry_type = dtype_char(entry->d_type);
-
-        struct stat sb;
         assert((fstatat(sys_dir_fd, entry->d_name, &sb, AT_SYMLINK_NOFOLLOW)) == 0);
 
         if (entry_type == '?') {
@@ -128,18 +130,16 @@ int SearchDir(int sys_dir_fd, int level) {
         char* buf = (char*) calloc(9, sizeof(char));
         assert(buf != NULL);
         get_access(sb.st_mode, buf);
-
         PrintDir(buf, entry_type, entry->d_name, level);
-
         free(buf);
 
-        if (CheckFile(entry_type, entry->d_name, sb.st_mode) == SUITABLE_DIR) {
-            int lowl_dir_fd = openat(sys_dir_fd, entry->d_name, O_RDONLY);
+        if (check_dir(entry_type, entry->d_name, sb.st_mode) == SUITABLE_DIR) {
+            int new_dir_fd = openat(sys_dir_fd, entry->d_name, O_RDONLY);
 
             level+=4;
-            SearchDir(lowl_dir_fd, level);
+            SearchDir(new_dir_fd, level);
             level-=4;
-            close(lowl_dir_fd);
+            close(new_dir_fd);
         }
     }
 
@@ -153,6 +153,7 @@ int main(int argc, char* argv[]) {
     if (argc == 2) {
         dir_name = argv[1];
     }
+    
     int sys_dir_fd = open(dir_name, O_RDONLY);
     if (sys_dir_fd < 0) {
         perror("Failed for open file");

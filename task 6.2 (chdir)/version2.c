@@ -1,21 +1,19 @@
 //* Compile with gcc -Wall -Wextra -o version2 version2.c
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <dirent.h>
-
 #include <sys/types.h>
-
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-
 #include <assert.h>
-#include "../enum.h"
-
 #include <dirent.h>
 
-char file_mode(unsigned mode) {
+#include "../enum.h"
+
+const unsigned BUF_SIZE = 9;
+
+char file_mode(mode_t mode) {
 
     switch (mode & S_IFMT) {
         case S_IFBLK:  return 'b';   break;
@@ -48,7 +46,7 @@ char dtype_char(unsigned char dtype) {
     return '?';
 }
 
-void GetAccess(unsigned st_mode, char* buf) {
+void get_access(mode_t st_mode, char* buf) {
     buf[0] = st_mode & S_IRUSR ? 'r' : '-';
     buf[1] = st_mode & S_IWUSR ? 'w' : '-';
     buf[2] = st_mode & S_IXUSR ? 'x' : '-';
@@ -68,6 +66,7 @@ int main(int argc, char* argv[]) {
     }
 
     DIR* dir_fd = opendir(dir_name);
+
     // возвращает системный файловый дискриптор по C-шному файловому дискриптору
     int sys_dir_fd = dirfd(dir_fd);
     
@@ -79,15 +78,16 @@ int main(int argc, char* argv[]) {
     struct dirent* entry;
     printf("dir: %s\n\n", dir_name);
 
+    struct stat sb;
+
     while ((entry = readdir(dir_fd)) != NULL) {
 
         char entry_type = dtype_char(entry->d_type);
 
-        struct stat sb;
         assert((fstatat(sys_dir_fd, entry->d_name, &sb, AT_SYMLINK_NOFOLLOW)) == 0);
 
-        char* buf = (char*) calloc(9, sizeof(char));
-        GetAccess(sb.st_mode, buf);
+        char* buf = (char*) calloc(BUF_SIZE, sizeof(char));
+        get_access(sb.st_mode, buf);
         printf("[%s] ", buf);
         free(buf);
 
