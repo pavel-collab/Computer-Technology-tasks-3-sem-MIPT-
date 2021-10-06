@@ -42,6 +42,7 @@ int rm_file(const char* filename) {
     return RESULT_OK;
 }
 
+// функция проверяет права пользователя
 int check_user_access(const char* file_name, const char access) {
 
     struct stat sb = {};
@@ -59,52 +60,15 @@ int check_user_access(const char* file_name, const char access) {
     }
 }
 
-int copy_file(const char* copy_file, const char* destination_file) {
+int copy_file(unsigned cp_file, unsigned dstn_file, const char* destination_file, struct stat *sb) {
 
-    // флаг __O_NOATIME используется, чтобы при открытии файла время доступа к нему не менялось
-    int cp_file   = open(copy_file, O_RDONLY | __O_NOATIME);
-
-    if (cp_file < 0) {
-        perror("Failed for open copy file for writing");
-        rm_file(destination_file);
-        return RESULT_OPEN_FAILED;
-    }
-
-    int dstn_file = open(destination_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-
-    if (dstn_file < 0) {
-        perror("Failed for open destination file for writing");
-        rm_file(destination_file);
-        return RESULT_OPEN_FAILED;
-    }
-
-    if (check_user_access(copy_file, 'r') != 1) {
-        fprintf(stderr, "Usage: %s filename\n", copy_file);
-        perror("This file can't be read");
-        rm_file(destination_file);
-        return RESULT_BAD_READ;
-    }
-
-    if (check_user_access(destination_file, 'w') != 1) {
-        fprintf(stderr, "Usage: %s filename\n", destination_file);
-        perror("This file can't be written in");
-        rm_file(destination_file);
-        return RESULT_BAD_WRITE;
-    }
-
-    struct stat sb;
-
-    if (lstat(copy_file, &sb) == -1) {
-        perror("lstat");
-        return EXIT_FAILURE;
-    }
-
-    // узнаем размер файла в байтах
-    long long copy_file_size = (long long) sb.st_size;
-
+    // аллоцирем буфер для чтения
     char* buf = (char*) calloc(MAX_LEN, sizeof(char));
     assert(buf != NULL);
 
+    long long copy_file_size = (long long) sb->st_size;
+
+    // копируем информацию
     while(copy_file_size > 0) {
 
         ssize_t read_symb_amount = read(cp_file, buf, MAX_LEN);
@@ -140,8 +104,8 @@ int copy_file(const char* copy_file, const char* destination_file) {
     struct utimbuf file_time_buf;
 
     // кладем в стуктуру время доступа и модификации исходного файла
-    file_time_buf.actime  = sb.st_atime;
-    file_time_buf.modtime = sb.st_mtime;
+    file_time_buf.actime  = sb->st_atime;
+    file_time_buf.modtime = sb->st_mtime;
 
     // присваиваем новому файлу параметры времени исходника
     if (utime(destination_file, &file_time_buf) != 0) {
@@ -152,16 +116,6 @@ int copy_file(const char* copy_file, const char* destination_file) {
     }
 
     //-----------------------------------------------------------------------------------------
-
-    if (close(cp_file) < 0) {
-        perror("Failed close copy file.");
-        return RESULT_BAD_CLOSE;
-    }
-
-    if (close(dstn_file) < 0) {
-        perror("Failed close destination file.");
-        return RESULT_BAD_CLOSE;
-    }
 
     free(buf);
 
@@ -181,8 +135,9 @@ int main(int argc, char* argv[]) {
         return RESULT_BAD_ARG;
     }
 
-    // инициализируем структуру
-    struct stat sb = {};
+    // ===========================================================================================
+
+    struct stat sb;
 
     if (lstat(argv[1], &sb) == -1) {
         perror("lstat");
@@ -195,15 +150,54 @@ int main(int argc, char* argv[]) {
         return RESULT_BAD_FILE_TYPE;
     }
 
-    copy_file(argv[1], argv[2]);
+    // ===========================================================================================
+
+    // флаг __O_NOATIME используется, чтобы при открытии файла время доступа к нему не менялось
+    int cp_file   = open(argv[1], O_RDONLY | __O_NOATIME);
+    if (cp_file < 0) {
+        perror("Failed for open copy file for writing");
+        rm_file(argv[2]);
+        return RESULT_OPEN_FAILED;
+    }
+
+    int dstn_file = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (dstn_file < 0) {
+        perror("Failed for open destination file for writing");
+        rm_file(argv[2]);
+        return RESULT_OPEN_FAILED;
+    }
+
+    // ===========================================================================================
+    
+    // проверяем право на чтение файла
+    if (check_user_access(argv[1], 'r') != 1) {
+        fprintf(stderr, "Usage: %s filename\n", argv[2]);
+        perror("This file can't be read");
+        return RESULT_BAD_READ;
+    }
+
+    // проверяем право на запись в файл
+    if (check_user_access(argv[2], 'w') != 1) {
+        fprintf(stderr, "Usage: %s filename\n", argv[2]);
+        perror("This file can't be written in");
+        return RESULT_BAD_WRITE;
+    }
+
+    // ===========================================================================================
+    
+    copy_file(cp_file, dstn_file, argv[2], &sb);
+
+    // ===========================================================================================
+
+    if (close(cp_file) < 0) {
+        perror("Failed close copy file.");
+        return RESULT_BAD_CLOSE;
+    }
+
+    if (close(dstn_file) < 0) {
+        perror("Failed close destination file.");
+        return RESULT_BAD_CLOSE;
+    }
 
     return RESULT_OK;
 }
-
-//! читать полностью маны на chown and chmod!!!
-//* если копировать собственные файлы, то в chown нет никакого смысла.
-
-//? mknode
-//? mkfifo
-// считываем содержимое ссылки с помощью readlink
-// и записываем ее содержимое в новую ссылку с помощью symlink
