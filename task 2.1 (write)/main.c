@@ -1,10 +1,7 @@
 //* Compile with gcc -Wall -Wextra -o out main.c
-
 #include <stdint.h> // uint8_t
 #include <string.h>
-
 #include <stdio.h>
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -59,5 +56,5 @@ int main(int argc, char* argv[])
         return RESULT_BAD_CLOSE;
     }
 
-    //return RESULT_OK;
+    return RESULT_OK;
 }

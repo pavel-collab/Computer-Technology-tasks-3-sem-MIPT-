@@ -56,7 +56,8 @@ char dtype_char(unsigned char dtype) {
     return '?';
 }
 
-void GetAccess(unsigned st_mode, char* buf) {
+// записываем в buf 
+void get_access(unsigned st_mode, char* buf) {
     buf[0] = st_mode & S_IRUSR ? 'r' : '-';
     buf[1] = st_mode & S_IWUSR ? 'w' : '-';
     buf[2] = st_mode & S_IXUSR ? 'x' : '-';
@@ -126,7 +127,7 @@ int SearchDir(int sys_dir_fd, int level) {
 
         char* buf = (char*) calloc(9, sizeof(char));
         assert(buf != NULL);
-        GetAccess(sb.st_mode, buf);
+        get_access(sb.st_mode, buf);
 
         PrintDir(buf, entry_type, entry->d_name, level);
 

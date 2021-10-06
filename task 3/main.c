@@ -1,26 +1,19 @@
 //* Compile with gcc -Wall -Wextra -o out main.c
-
 #include <stdint.h> // uint8_t
-
 #include <fcntl.h>
 #include <unistd.h>
-
 #include <stdio.h>
 #include <stdlib.h>
-
-// заголовочные файлы для вызова stat, lstat, fsltat
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
-
 #include <assert.h>
-
 #include <utime.h>
 
-const unsigned int MAX_LEN = 256;
-const size_t buf_size = 256;
-
 #include "../enum.h"
+
+// 1 Mbyte
+const unsigned int MAX_LEN = 1024 * 1024;
 
 ssize_t writeall(int fd, const void *buf, size_t count) {
     size_t bytes_written = 0;
@@ -39,22 +32,17 @@ ssize_t writeall(int fd, const void *buf, size_t count) {
 }
 
 // the function of the removing fire from the current dir
-int rm_file(char* filename) {
+int rm_file(const char* filename) {
 
-    // конкатенация строк
-    const char *rm  = "rm ";
-
-    char command[512];
-    snprintf(command, sizeof command, "%s%s", rm, filename);
-    // ----------------------------------------------------------------------------------------
-
-    system(command);
+    if (unlink(filename) == -1) {
+        perror("It's not possible to remove this file");
+        return RESULT_ERR;
+    }
     printf("[+] Successful removing: %s", filename);
-
-    return 0;
+    return RESULT_OK;
 }
 
-int CheckUserAccess(char* file_name, char access) {
+int check_user_access(const char* file_name, const char access) {
 
     struct stat sb = {};
 
@@ -71,11 +59,10 @@ int CheckUserAccess(char* file_name, char access) {
     }
 }
 
-int copy_file(char* copy_file, char* destination_file) {
+int copy_file(const char* copy_file, const char* destination_file) {
 
     // флаг __O_NOATIME используется, чтобы при открытии файла время доступа к нему не менялось
     int cp_file   = open(copy_file, O_RDONLY | __O_NOATIME);
-    int dstn_file = open(destination_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 
     if (cp_file < 0) {
         perror("Failed for open copy file for writing");
@@ -83,25 +70,29 @@ int copy_file(char* copy_file, char* destination_file) {
         return RESULT_OPEN_FAILED;
     }
 
+    int dstn_file = open(destination_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+
     if (dstn_file < 0) {
         perror("Failed for open destination file for writing");
         rm_file(destination_file);
         return RESULT_OPEN_FAILED;
     }
 
-    if (CheckUserAccess(copy_file, 'r') != 1) {
+    if (check_user_access(copy_file, 'r') != 1) {
         fprintf(stderr, "Usage: %s filename\n", copy_file);
         perror("This file can't be read");
+        rm_file(destination_file);
         return RESULT_BAD_READ;
     }
 
-    if (CheckUserAccess(destination_file, 'w') != 1) {
+    if (check_user_access(destination_file, 'w') != 1) {
         fprintf(stderr, "Usage: %s filename\n", destination_file);
         perror("This file can't be written in");
+        rm_file(destination_file);
         return RESULT_BAD_WRITE;
     }
 
-    struct stat sb = {};
+    struct stat sb;
 
     if (lstat(copy_file, &sb) == -1) {
         perror("lstat");
@@ -146,7 +137,7 @@ int copy_file(char* copy_file, char* destination_file) {
     }
 
     // инициализируем структуру
-    struct utimbuf file_time_buf = {};
+    struct utimbuf file_time_buf;
 
     // кладем в стуктуру время доступа и модификации исходного файла
     file_time_buf.actime  = sb.st_atime;
