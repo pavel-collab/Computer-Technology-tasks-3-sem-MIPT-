@@ -7,7 +7,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "../enum.h"
+#include "enum.h"
 
 // size_t  -- беззнаковый
 // ssize_t -- знаковый

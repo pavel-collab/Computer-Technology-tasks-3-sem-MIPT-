@@ -18,7 +18,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "../enum.h"
+#include "enum.h"
 
 char file_mode(unsigned mode) {
 

@@ -5,8 +5,17 @@
 sundbox.c
 sundbox
 
-out
-
 test.txt
 test1.txt
 mylink
+
+1stat 
+2.1write 
+2.2dprintf 
+3.1cpregf 
+3.2pread 
+3copy 
+6.1readdir 
+6.2chdir 
+6.2version2 
+6.3rundir

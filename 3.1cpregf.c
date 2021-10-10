@@ -8,11 +8,9 @@
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 #include <assert.h>
-#include <utime.h>
 
-#include "../enum.h"
+#include "enum.h"
 
-// 1 Mbyte
 const unsigned int MAX_LEN = 1024 * 1024;
 
 ssize_t writeall(int fd, const void *buf, size_t count) {
@@ -100,23 +98,6 @@ int copy_file(unsigned cp_file, unsigned dstn_file, const char* destination_file
 
     }
 
-    // инициализируем структуру
-    struct utimbuf file_time_buf;
-
-    // кладем в стуктуру время доступа и модификации исходного файла
-    file_time_buf.actime  = sb->st_atime;
-    file_time_buf.modtime = sb->st_mtime;
-
-    // присваиваем новому файлу параметры времени исходника
-    if (utime(destination_file, &file_time_buf) != 0) {
-        perror("Error, impossible to assign the values of access time and modefite time.");
-        rm_file(destination_file);
-        close(dstn_file);
-        return RESULT_BAD_COPY_TIME;
-    }
-
-    //-----------------------------------------------------------------------------------------
-
     free(buf);
 
     return RESULT_OK;
@@ -152,8 +133,7 @@ int main(int argc, char* argv[]) {
 
     // ===========================================================================================
 
-    // флаг __O_NOATIME используется, чтобы при открытии файла время доступа к нему не менялось
-    int cp_file   = open(argv[1], O_RDONLY | __O_NOATIME);
+    int cp_file   = open(argv[1], O_RDONLY);
     if (cp_file < 0) {
         perror("Failed for open copy file for writing");
         rm_file(argv[2]);

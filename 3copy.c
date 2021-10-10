@@ -1,7 +1,4 @@
 //* Compile with gcc -Wall -Wextra -o out main.c
-// go to man 2 pwrite
-#define _XOPEN_SOURCE 500
-
 #include <stdint.h> // uint8_t
 #include <fcntl.h>
 #include <unistd.h>
@@ -11,17 +8,19 @@
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 #include <assert.h>
+#include <utime.h>
 
-#include "../enum.h"
+#include "enum.h"
 
-const unsigned int MAX_LEN = 5;
+// 1 Mbyte
+const unsigned int MAX_LEN = 1024 * 1024;
 
 ssize_t writeall(int fd, const void *buf, size_t count) {
     size_t bytes_written = 0;
     const uint8_t *buf_addr = buf;
 
     while (bytes_written < count) {
-        ssize_t res = pwrite(fd, buf_addr + bytes_written, count - bytes_written, 0);
+        ssize_t res = write(fd, buf_addr + bytes_written, count - bytes_written);
 
         if (res < 0) {
             return res;
@@ -72,20 +71,7 @@ int copy_file(unsigned cp_file, unsigned dstn_file, const char* destination_file
     // копируем информацию
     while(copy_file_size > 0) {
 
-        off_t position = 0;
-        unsigned int rsym_count = 0;
-
-        if (copy_file_size > MAX_LEN) {
-            position = copy_file_size - MAX_LEN;
-            rsym_count = MAX_LEN;
-        }
-        else {
-            position = 0;
-            rsym_count = copy_file_size;
-        }
-        
-        ssize_t read_symb_amount = pread(cp_file, buf, rsym_count, position);
-
+        ssize_t read_symb_amount = read(cp_file, buf, MAX_LEN);
 
         if (read_symb_amount < 0) {
             perror("Failed read from the file");
@@ -111,9 +97,25 @@ int copy_file(unsigned cp_file, unsigned dstn_file, const char* destination_file
         }
 
         copy_file_size -= read_symb_amount;
-        position -= read_symb_amount;
 
     }
+
+    // инициализируем структуру
+    struct utimbuf file_time_buf;
+
+    // кладем в стуктуру время доступа и модификации исходного файла
+    file_time_buf.actime  = sb->st_atime;
+    file_time_buf.modtime = sb->st_mtime;
+
+    // присваиваем новому файлу параметры времени исходника
+    if (utime(destination_file, &file_time_buf) != 0) {
+        perror("Error, impossible to assign the values of access time and modefite time.");
+        rm_file(destination_file);
+        close(dstn_file);
+        return RESULT_BAD_COPY_TIME;
+    }
+
+    //-----------------------------------------------------------------------------------------
 
     free(buf);
 
@@ -150,14 +152,15 @@ int main(int argc, char* argv[]) {
 
     // ===========================================================================================
 
-    int cp_file   = open(argv[1], O_RDONLY);
+    // флаг __O_NOATIME используется, чтобы при открытии файла время доступа к нему не менялось
+    int cp_file   = open(argv[1], O_RDONLY | __O_NOATIME);
     if (cp_file < 0) {
         perror("Failed for open copy file for writing");
         rm_file(argv[2]);
         return RESULT_OPEN_FAILED;
     }
 
-    int dstn_file = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC | O_APPEND, 0644);
+    int dstn_file = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (dstn_file < 0) {
         perror("Failed for open destination file for writing");
         rm_file(argv[2]);
