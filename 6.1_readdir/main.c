@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <assert.h>
 // --------------------------------------------------------------------------------------------
-
 #include "../enum.h"
 
 char file_mode(unsigned mode) {

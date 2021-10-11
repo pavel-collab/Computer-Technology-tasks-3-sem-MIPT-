@@ -9,7 +9,6 @@
 #include <assert.h>
 #include <dirent.h>
 // --------------------------------------------------------------------------------------------
-
 #include "../enum.h"
 
 const unsigned BUF_SIZE = 9;

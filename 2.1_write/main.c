@@ -1,4 +1,5 @@
 //* Compile with gcc -Wall -Wextra -o out main.c
+
 #include <stdint.h> // uint8_t
 #include <string.h>
 #include <stdio.h>

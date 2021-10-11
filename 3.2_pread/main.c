@@ -12,7 +12,6 @@
 #include <sys/sysmacros.h>
 #include <assert.h>
 // --------------------------------------------------------------------------------------------
-
 #include "../enum.h"
 
 const unsigned int MAX_LEN = 5;
