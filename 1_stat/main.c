@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../enum.h"
+
 // размер буфера для форматного вывода времени в консоль
 unsigned int BUF_SIZE = 64;
 
