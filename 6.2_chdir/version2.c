@@ -9,54 +9,9 @@
 #include <assert.h>
 #include <dirent.h>
 // --------------------------------------------------------------------------------------------
-#include "../enum.h"
+#include "../CT_tasks.h"
 
 const unsigned BUF_SIZE = 9;
-
-char file_mode(mode_t mode) {
-
-    switch (mode & S_IFMT) {
-        case S_IFBLK:  return 'b';   break;
-        case S_IFCHR:  return 'c';   break;
-        case S_IFDIR:  return 'd';   break;
-        case S_IFIFO:  return 'f';   break;
-        case S_IFLNK:  return 'l';   break;
-        case S_IFREG:  return 'r';   break;
-        case S_IFSOCK: return 's';   break;
-        default:       return '?';   break;
-    }
-
-    return '?';
-
-}
-
-char dtype_char(unsigned char dtype) {
-
-    switch (dtype) {
-        case DT_BLK :     return 'b'; break; 
-        case DT_CHR:      return 'c'; break;
-        case DT_DIR:      return 'd'; break;
-        case DT_FIFO:     return 'f'; break;
-        case DT_LNK:      return 'l'; break;
-        case DT_REG:      return 'r'; break;
-        case DT_SOCK:     return 's'; break;
-        case DT_UNKNOWN:  return '?'; break;
-    }
-
-    return '?';
-}
-
-void get_access(mode_t st_mode, char* buf) {
-    buf[0] = st_mode & S_IRUSR ? 'r' : '-';
-    buf[1] = st_mode & S_IWUSR ? 'w' : '-';
-    buf[2] = st_mode & S_IXUSR ? 'x' : '-';
-    buf[3] = st_mode & S_IRGRP ? 'r' : '-';
-    buf[4] = st_mode & S_IWGRP ? 'w' : '-';
-    buf[5] = st_mode & S_IXGRP ? 'x' : '-';
-    buf[6] = st_mode & S_IROTH ? 'r' : '-';
-    buf[7] = st_mode & S_IWOTH ? 'w' : '-';
-    buf[8] = st_mode & S_IXOTH ? 'x' : '-';
-}
 
 int main(int argc, char* argv[]) {
 

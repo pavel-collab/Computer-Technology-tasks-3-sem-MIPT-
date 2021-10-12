@@ -12,56 +12,11 @@
 #include <sys/sysmacros.h>
 #include <assert.h>
 // --------------------------------------------------------------------------------------------
-#include "../enum.h"
+#include "../CT_tasks.h"
 
-const unsigned int MAX_LEN = 5;
+const unsigned int MAX_LEN = 1024 * 1024;
 
-ssize_t writeall(int fd, const void *buf, size_t count) {
-    size_t bytes_written = 0;
-    const uint8_t *buf_addr = buf;
-
-    while (bytes_written < count) {
-        ssize_t res = pwrite(fd, buf_addr + bytes_written, count - bytes_written, 0);
-
-        if (res < 0) {
-            return res;
-        }
-
-        bytes_written += (size_t) res;
-    }
-    return (ssize_t) bytes_written;
-}
-
-// the function of the removing fire from the current dir
-int rm_file(const char* filename) {
-
-    if (unlink(filename) == -1) {
-        perror("It's not possible to remove this file");
-        return RESULT_ERR;
-    }
-    printf("[+] Successful removing: %s", filename);
-    return RESULT_OK;
-}
-
-// функция проверяет права пользователя
-int check_user_access(const char* file_name, const char access) {
-
-    struct stat sb = {};
-
-    if (lstat(file_name, &sb) == -1) {
-        perror("lstat");
-        return EXIT_FAILURE;
-    }
-
-    switch (access) {
-        case 'r': return (sb.st_mode & S_IRUSR) ? 1 : 0;
-        case 'w': return (sb.st_mode & S_IWUSR) ? 1 : 0;
-        case 'x': return (sb.st_mode & S_IXUSR) ? 1 : 0;
-        default:  return -1;
-    }
-}
-
-int copy_file(unsigned cp_file, unsigned dstn_file, const char* destination_file, struct stat *sb) {
+int reverse_copy_file(unsigned cp_file, unsigned dstn_file, const char* destination_file, struct stat *sb) {
 
     // аллоцирем буфер для чтения
     char* buf = (char*) calloc(MAX_LEN, sizeof(char));
@@ -119,7 +74,6 @@ int copy_file(unsigned cp_file, unsigned dstn_file, const char* destination_file
 
     return RESULT_OK;
 }
-
 
 // в параметры командной строки передаются:
 // файл-исток      argv[1]
@@ -182,7 +136,7 @@ int main(int argc, char* argv[]) {
 
     // ===========================================================================================
     
-    copy_file(cp_file, dstn_file, argv[2], &sb);
+    reverse_copy_file(cp_file, dstn_file, argv[2], &sb);
 
     // ===========================================================================================
 
