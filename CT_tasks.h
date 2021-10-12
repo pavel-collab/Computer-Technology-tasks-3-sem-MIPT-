@@ -24,8 +24,14 @@ ssize_t writeall(int fd, const void *buf, size_t count);
 
 int rm_file(const char* filename);
 
-int check_user_access(const char* file_name, const char access);
+int check_user_access(const char* file_name, const char access, mode_t mode);
 
+// функции передается:
+//                     файловый дескриптор на копируемый файл
+//                     файловый дескриптор на файл назначения
+//                     имя файла назначения
+//                     объект структуры stat с ифнормацией о файле
+//                     размер блока чтения
 int copy_file(unsigned cp_file, unsigned dstn_file, const char* destination_file, struct stat *sb, const unsigned max_len);
 
 char file_mode(unsigned mode);
@@ -39,3 +45,9 @@ int PrintDir(char* buf, char entry_type, char* file_name, int level);
 int check_dir(char entry_type, char* dr_name, mode_t mode);
 
 int RunDir(int sys_dir_fd, int level);
+
+int CopyFifo(const char* dst_fifo, mode_t mode);
+
+int CopyNod(const char* dst_nod, mode_t mode, dev_t rdev);
+
+int CopyLink(const char* copy_link, const char* dst_link);

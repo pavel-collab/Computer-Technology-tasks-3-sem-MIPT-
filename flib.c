@@ -80,19 +80,12 @@ int rm_file(const char* filename) {
 }
 
 // функция проверяет права пользователя
-int check_user_access(const char* file_name, const char access) {
-
-    struct stat sb = {};
-
-    if (lstat(file_name, &sb) == -1) {
-        perror("lstat");
-        return EXIT_FAILURE;
-    }
+int check_user_access(const char* file_name, const char access, mode_t mode) {
 
     switch (access) {
-        case 'r': return (sb.st_mode & S_IRUSR) ? 1 : 0;
-        case 'w': return (sb.st_mode & S_IWUSR) ? 1 : 0;
-        case 'x': return (sb.st_mode & S_IXUSR) ? 1 : 0;
+        case 'r': return (mode & S_IRUSR) ? 1 : 0;
+        case 'w': return (mode & S_IWUSR) ? 1 : 0;
+        case 'x': return (mode & S_IXUSR) ? 1 : 0;
         default:  return -1;
     }
 }
@@ -154,6 +147,21 @@ int copy_file(unsigned cp_file, unsigned dstn_file, const char* destination_file
 
     //-----------------------------------------------------------------------------------------
 
+    // Copying User Id and Group Id
+    if(fchown(dstn_file, sb->st_uid, sb->st_gid) < 0) 
+    {
+        perror("Failure while copying UID and GID");
+        return 8;
+    }
+
+    // Copying access permissions
+    if(fchmod(dstn_file, sb->st_mode) < 0) 
+    {
+        perror("Failure while copying access permissions");
+        return 8;
+    }
+    // --------------------------------------------------------------------------------------------
+    
     free(buf);
 
     return RESULT_OK;
@@ -271,4 +279,32 @@ int RunDir(int sys_dir_fd, int level) {
 
     closedir(dir_fd);
     return RESULT_OK;
+}
+
+// Creating FIFO file if original one is FIFO/pipe
+int CopyFifo(const char* dst_fifo, mode_t mode) {
+    return (mkfifo(dst_fifo, mode) < 0) ? -1 : 0;
+}
+
+// Device ID (if special file)
+int CopyNod(const char* dst_nod, mode_t mode, dev_t rdev) {
+    return (mknod(dst_nod, mode, rdev) < 0) ? -1 : 0;
+}
+
+int CopyLink(const char* copy_link, const char* dst_link) {
+    char* buf = (char*) calloc(PATH_MAX, sizeof(char));
+
+    if (readlink(copy_link, buf, PATH_MAX) < 0) {
+        perror("Failed to read link");
+        free(buf);
+        return -1;
+    }
+
+    if (symlink(buf, dst_link) < 0) {
+        perror("Failed to create a  new link");
+        free(buf);
+        return -1;
+    }
+  
+    return 0;
 }
