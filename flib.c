@@ -281,16 +281,6 @@ int RunDir(int sys_dir_fd, int level) {
     return RESULT_OK;
 }
 
-// Creating FIFO file if original one is FIFO/pipe
-int CopyFifo(const char* dst_fifo, mode_t mode) {
-    return (mkfifo(dst_fifo, mode) < 0) ? -1 : 0;
-}
-
-// Device ID (if special file)
-int CopyNod(const char* dst_nod, mode_t mode, dev_t rdev) {
-    return (mknod(dst_nod, mode, rdev) < 0) ? -1 : 0;
-}
-
 int CopyLink(const char* copy_link, const char* dst_link) {
     char* buf = (char*) calloc(PATH_MAX, sizeof(char));
 

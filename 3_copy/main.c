@@ -31,6 +31,8 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
+    // ===========================================================================================
+
     switch(sb.st_mode & S_IFMT) {
         case S_IFREG: {
             // проверяем право на чтение файла
@@ -76,8 +78,15 @@ int main(int argc, char* argv[]) {
 
             break;
         }
+        case S_IFDIR: {
+            if (mkdir(argv[2], sb.st_mode) < 0) {
+                perror("Failed to create directory");
+                return RESULT_ERR;
+            }
+            break;
+        }
         case S_IFIFO: {
-            if (CopyFifo(argv[2], sb.st_mode) == -1) {
+            if (mkfifo(argv[2], sb.st_mode) < 0) {
                 perror("Failed to create FIFO file");
                 return RESULT_ERR;
             }
@@ -89,7 +98,7 @@ int main(int argc, char* argv[]) {
         }
         case S_IFBLK: 
         case S_IFCHR: {
-            if (CopyNod(argv[2], sb.st_mode, sb.st_rdev) == -1) {
+            if (mknod(argv[2], sb.st_mode, sb.st_rdev) < 0) {
                 perror("Failed to create new character device");
                 return RESULT_ERR;
             }

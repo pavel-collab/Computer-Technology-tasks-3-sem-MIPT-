@@ -46,8 +46,4 @@ int check_dir(char entry_type, char* dr_name, mode_t mode);
 
 int RunDir(int sys_dir_fd, int level);
 
-int CopyFifo(const char* dst_fifo, mode_t mode);
-
-int CopyNod(const char* dst_nod, mode_t mode, dev_t rdev);
-
 int CopyLink(const char* copy_link, const char* dst_link);
