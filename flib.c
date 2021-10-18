@@ -14,7 +14,11 @@
 // --------------------------------------------------------------------------------------------
 #include "CT_tasks.h"
 
-// считывает системное время и преобразует его в строку; время выводится в UTC
+// функци считывает системное время и преобразует его в строку; время выводится в UTC
+// параметры функции :
+//                    str      --
+//                    s_time   --
+//                    buf_size --
 char* get_UTC_time(char* str, const time_t* s_time, unsigned buf_size) {
     //Указатель на структуру tm для хранения времени
     struct tm *tm_time;
@@ -24,6 +28,9 @@ char* get_UTC_time(char* str, const time_t* s_time, unsigned buf_size) {
     return (strftime (str, buf_size, "%x %A %X (UTC)", tm_time) > 0) ? str : NULL;
 }
 
+// функция определяет тип файла (regulaar, dir, symlink etc)
+// параметры функии:
+//                  mode --
 const char* file_type(mode_t mode) {
     // маска S_IFMT путем побитового AND позволяет считывать только необходимые биты поля st_mode
     // man 2 stat
@@ -39,7 +46,10 @@ const char* file_type(mode_t mode) {
     }
 }
 
-// записываем в buf права доступа к файлу
+// функция записывает в буффер buf права доступа к файлу
+// параметры функции:
+//                    st_mode --
+//                    buf     --
 void get_access(mode_t st_mode, char* buf) {
     buf[0] = st_mode & S_IRUSR ? 'r' : '-';
     buf[1] = st_mode & S_IWUSR ? 'w' : '-';
@@ -52,6 +62,11 @@ void get_access(mode_t st_mode, char* buf) {
     buf[8] = st_mode & S_IXOTH ? 'x' : '-';
 }
 
+// функция записывает в файл с файловым дискриптором fd содержимое буффера buf
+// параметры функции:
+//                   fd    --
+//                   buf   --
+//                   count --
 ssize_t writeall(int fd, const void *buf, size_t count) {
     size_t bytes_written = 0;
     const uint8_t *buf_addr = buf;
@@ -297,4 +312,49 @@ int CopyLink(const char* copy_link, const char* dst_link) {
     }
   
     return 0;
+}
+
+int copy_reg_file(unsigned cp_file, unsigned dstn_file, const char* destination_file, struct stat *sb, const unsigned max_len) {
+
+    // аллоцирем буфер для чтения
+    char* buf = (char*) calloc(max_len, sizeof(char));
+    assert(buf != NULL);
+
+    long long copy_file_size = (long long) sb->st_size;
+
+    // копируем информацию
+    while(copy_file_size > 0) {
+
+        ssize_t read_symb_amount = read(cp_file, buf, max_len);
+
+        if (read_symb_amount < 0) {
+            perror("Failed read from the file");
+            rm_file(destination_file);
+            close(cp_file);
+            return RESULT_BAD_READ;
+        }
+
+        ssize_t write_symb_amount = writeall(dstn_file, buf, read_symb_amount);
+
+        if (write_symb_amount < 0) {
+            perror("Failed write to file");
+            rm_file(destination_file);
+            close(dstn_file);
+            return RESULT_BAD_WRITE;
+        }
+
+        if (write_symb_amount != read_symb_amount) {
+            perror("The number of symbols written does't match the number of symbols read.");
+            rm_file(destination_file);
+            close(dstn_file);
+            return RESULT_BAD_WRITE;
+        }
+
+        copy_file_size -= read_symb_amount;
+
+    }
+
+    free(buf);
+
+    return RESULT_OK;
 }

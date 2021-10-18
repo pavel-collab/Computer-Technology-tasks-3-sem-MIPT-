@@ -47,3 +47,5 @@ int check_dir(char entry_type, char* dr_name, mode_t mode);
 int RunDir(int sys_dir_fd, int level);
 
 int CopyLink(const char* copy_link, const char* dst_link);
+
+int copy_reg_file(unsigned cp_file, unsigned dstn_file, const char* destination_file, struct stat *sb, const unsigned max_len);

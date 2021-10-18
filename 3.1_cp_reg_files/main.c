@@ -13,51 +13,6 @@
 
 const unsigned int MAX_LEN = 1024 * 1024;
 
-int copy_reg_file(unsigned cp_file, unsigned dstn_file, const char* destination_file, struct stat *sb, const unsigned max_len) {
-
-    // аллоцирем буфер для чтения
-    char* buf = (char*) calloc(max_len, sizeof(char));
-    assert(buf != NULL);
-
-    long long copy_file_size = (long long) sb->st_size;
-
-    // копируем информацию
-    while(copy_file_size > 0) {
-
-        ssize_t read_symb_amount = read(cp_file, buf, max_len);
-
-        if (read_symb_amount < 0) {
-            perror("Failed read from the file");
-            rm_file(destination_file);
-            close(cp_file);
-            return RESULT_BAD_READ;
-        }
-
-        ssize_t write_symb_amount = writeall(dstn_file, buf, read_symb_amount);
-
-        if (write_symb_amount < 0) {
-            perror("Failed write to file");
-            rm_file(destination_file);
-            close(dstn_file);
-            return RESULT_BAD_WRITE;
-        }
-
-        if (write_symb_amount != read_symb_amount) {
-            perror("The number of symbols written does't match the number of symbols read.");
-            rm_file(destination_file);
-            close(dstn_file);
-            return RESULT_BAD_WRITE;
-        }
-
-        copy_file_size -= read_symb_amount;
-
-    }
-
-    free(buf);
-
-    return RESULT_OK;
-}
-
 // в параметры командной строки передаются:
 // файл-исток      argv[1]
 // файл-назначение argv[2]
@@ -104,22 +59,22 @@ int main(int argc, char* argv[]) {
     // ===========================================================================================
     
     // проверяем право на чтение файла
-    if (check_user_access(argv[1], 'r') != 1) {
+    if (check_user_access(argv[1], 'r', sb.st_mode) != 1) {
         fprintf(stderr, "Usage: %s filename\n", argv[2]);
         perror("This file can't be read");
         return RESULT_BAD_READ;
     }
 
-    // проверяем право на запись в файл
-    if (check_user_access(argv[2], 'w') != 1) {
-        fprintf(stderr, "Usage: %s filename\n", argv[2]);
-        perror("This file can't be written in");
-        return RESULT_BAD_WRITE;
-    }
+    // // проверяем право на запись в файл
+    // if (check_user_access(argv[2], 'w') != 1) {
+    //     fprintf(stderr, "Usage: %s filename\n", argv[2]);
+    //     perror("This file can't be written in");
+    //     return RESULT_BAD_WRITE;
+    // }
 
     // ===========================================================================================
     
-    copy_file(cp_file, dstn_file, argv[2], &sb, MAX_LEN);
+    copy_reg_file(cp_file, dstn_file, argv[2], &sb, MAX_LEN);
 
     // ===========================================================================================
 
