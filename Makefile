@@ -17,6 +17,7 @@ SRC_PATH_TASK6_2=6.2_chdir/main.c
 SRC_PATH_TASK6_2VER2=6.2_chdir/version2.c
 SRC_PATH_TASK6_3=6.3_rundir/main.c
 SRC_PATH_TASK7_1=7.1_copydir/main.cpp
+SRC_PATH_TASK7_2=7.2_cprundir/main.cpp
 
 all: 1_stat 2.1_write 2.2_dprintf 3_copy 3.1_cp_reg_files 3.2_pread 6.1_readdir 6.2_chdir 6.2_version2 6.3_rundir
 
@@ -42,6 +43,8 @@ all: 1_stat 2.1_write 2.2_dprintf 3_copy 3.1_cp_reg_files 3.2_pread 6.1_readdir 
 	$(C) -o out ${SRC_PATH_TASK6_3} flib.c
 7.1_copydir: ${SRC_PATH_TASK7_1} flib.c
 	$(CPP) -o out ${SRC_PATH_TASK7_1} flib.c
+7.2_cprundir: ${SRC_PATH_TASK7_2} flib.c
+	$(CPP) -o out ${SRC_PATH_TASK7_2} flib.c
 
 
 clear:
