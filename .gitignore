@@ -2,8 +2,7 @@
 *.exe
 *.vscode
 
-sundbox.c
-sundbox
+sandbox*
 
 out
 

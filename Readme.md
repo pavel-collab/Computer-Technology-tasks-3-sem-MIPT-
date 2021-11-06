@@ -237,7 +237,9 @@ new  -- новый файл
 
 ### TODO LIST
 
-- [ ] изменить основную дерикторию и переписать Makefile
+- [ ] task 13.1 -- exchange <waitpit> to <waitid> + output full information about proces (man waitid)
+- [ ] how to save core_dump in current dir
+- [X] изменить основную дерикторию и переписать Makefile
 - [X] сделать библиотеку функций
 - [X] проверить, что все работает
 - [ ] написать комментарии для функций

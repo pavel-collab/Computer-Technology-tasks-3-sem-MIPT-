@@ -5,7 +5,11 @@
 
 // получаем информацию о процессе
 void proc_info(const char* procname) {
-    printf("[%s]:\nPID %d,\nPPID %d,\nPGID %d,\nSID %d\n\n", procname, getpid(), getppid(), getpgid(0), getsid(0));
+    printf("[%s]:\n"
+           "PID %d,\n"
+           "PPID %d,\n"
+           "PGID %d,\n"
+           "SID %d\n\n", procname, getpid(), getppid(), getpgid(0), getsid(0));
 }
 
 int main(int argc, char *argv[]) {
@@ -49,13 +53,14 @@ int main(int argc, char *argv[]) {
                 printf("continued\n");
             }
 
-            #ifdef WCOREDUMP
-            if (WCOREDUMP(wstatus)) {
-                printf("child proc has cause a core dump\n");
-            }
-            #endif  
         } while (!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
         // крутимся в цикле, пока дочерний процесс не завершиться (успешно или по сигналу)
+
+        #ifdef WCOREDUMP
+        if (WCOREDUMP(wstatus)) {
+            printf("child proc has cause a core dump\n");
+        }
+        #endif 
 
         exit(EXIT_SUCCESS);
     }
@@ -82,4 +87,3 @@ WIFSTOPPED(wstatus)  -- возвращает истинное значение, 
 
 // ./out -> ^Z -> ps -> kill -11 <cpid> -> the child process has been killed by signal 11
 //                                         child proc has cause a core dump
-

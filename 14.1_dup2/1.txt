@@ -1,0 +1,2 @@
+child: PID 102916, PPID 102915, PGID 102915, SID 102892
+Hello, world
