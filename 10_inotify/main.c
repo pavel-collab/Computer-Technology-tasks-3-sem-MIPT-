@@ -4,12 +4,11 @@
 #include <stdlib.h>
 #include <sys/inotify.h>
 #include <unistd.h>
+#include <time.h>
 
-//TODO: exchenge exit() to return
-//TODO: exchange argc and argv to the variable
-//TODO: exchange static void to void
-//TODO: testing (open, close, read, write, create, delete)
-//TODO: time of exchande
+// размер буфера для форматного вывода времени в консоль
+unsigned int BUF_SIZE = 64;
+
 //TODO: understand, why the dir path is printed more that one times --> fix
 // --------------------------------------------------------------------------------------------
 //TODO: check the problem with rename of file --> solve problem
@@ -21,7 +20,18 @@
     argv --  is the list of watched directories.
 */
 
-static void handle_events(int fd, int *wd, int argc, char* argv[]) {
+char* get_UTC_time(char* str, const time_t* s_time, unsigned buf_size) {
+    //Указатель на структуру tm для хранения времени
+    struct tm *tm_time;
+
+    //считываем системное время и преобразуем системное время в UTC!!!!
+    tm_time = gmtime(s_time);
+    return (strftime (str, buf_size, "%x %A %X (UTC)", tm_time) > 0) ? str : NULL;
+}
+
+void handle_events(int fd, int *wd, int argc, char* argv[]) {
+
+    char time_buf[BUF_SIZE];
 
     /*  the structure inotify must be read all, 
         so it's necessary allocate enough buf size */
@@ -33,11 +43,12 @@ static void handle_events(int fd, int *wd, int argc, char* argv[]) {
 
     /* Loop while events can be read from inotify file descriptor. */
     for (;;) {
+
         /* read some events */
         len = read(fd, buf, sizeof(buf));
         if (len == -1 && errno != EAGAIN) {
             perror("read");
-            exit(EXIT_FAILURE);
+            return;
         }
         /*  If the nonblocking read() found no events to read, then
             it returns -1 with errno set to EAGAIN. In that case,
@@ -51,23 +62,27 @@ static void handle_events(int fd, int *wd, int argc, char* argv[]) {
         for (ptr = buf; ptr < buf + len; ptr += sizeof(struct inotify_event) + event->len) {
             event = (const struct inotify_event *) ptr;
 
+            time_t cur_time = time(NULL);
+
+            printf("%s | ", get_UTC_time(time_buf, &cur_time, BUF_SIZE));
+
             /* print event type */
             if (event->mask & IN_OPEN)
-                printf("IN_OPEN: ");
+                printf("IN_OPEN:          ");
             if (event->mask & IN_CLOSE_NOWRITE)
                 printf("IN_CLOSE_NOWRITE: ");
             if (event->mask & IN_CLOSE_WRITE)
-                printf("IN_CLOSE_WRITE: ");
+                printf("IN_CLOSE_WRITE:   ");
             if (event->mask & IN_ACCESS)
-                printf("IN_ACCESS: ");
+                printf("IN_ACCESS:        ");
             if (event->mask & IN_CREATE)
-                printf("IN_CREATE: ");
+                printf("IN_CREATE:        ");
             if (event->mask & IN_DELETE)
-                printf("IN_DELETE: ");
+                printf("IN_DELETE:        ");
             if (event->mask & IN_MODIFY)
-                printf("IN_MODIFY: ");
+                printf("IN_MODIFY:        ");
             if (event->mask & IN_ATTRIB)
-                printf("IN_ATTRIB: ");
+                printf("IN_ATTRIB:        ");
             
 
             /* print the name of the watched directory */
@@ -102,7 +117,7 @@ int main(int argc, char* argv[]) {
 
     if (argc < 2) {
         printf("Usage: %s PATH [PATH ...]\n", argv[0]);
-        exit(EXIT_FAILURE);
+        return -1;
     }
 
     printf("Press ENTER key to terminate.\n");
@@ -111,14 +126,14 @@ int main(int argc, char* argv[]) {
     fd = inotify_init1(IN_NONBLOCK);
     if (fd == -1) {
         perror("inotify_init1");
-        exit(EXIT_FAILURE);
+        return -1;
     }
 
     /* Allocate memory for watch descriptors */
     wd = calloc(argc, sizeof(int));
     if (wd == NULL) {
         perror("calloc");
-        exit(EXIT_FAILURE);
+        return -1;
     }
 
     /* Mark directories for events
@@ -137,7 +152,7 @@ int main(int argc, char* argv[]) {
         if (wd[i] == -1) {
             fprintf(stderr, "Cannot watch %s\n", argv[i]);
             perror("inotify_add_watch");
-            exit(EXIT_FAILURE);
+            return -1;
         }
     }
 
@@ -154,13 +169,14 @@ int main(int argc, char* argv[]) {
     /* Wait for events and/or terminal input */
     printf("Waiting for events\n");
     while (1) {
+
         poll_num = poll(fds, nfds, -1); // 2 -- amount of file descriptions; -1 -- infinity waiting time
 
         if (poll_num == -1) {
             if (errno == EINTR)
                 continue;
             perror("poll");
-            exit(EXIT_FAILURE);
+            return -1;
         }
 
         if (poll_num > 0) {
@@ -186,5 +202,5 @@ int main(int argc, char* argv[]) {
     close(fd);
     free(wd);
 
-    exit(EXIT_SUCCESS);
+    return -1;
 }
