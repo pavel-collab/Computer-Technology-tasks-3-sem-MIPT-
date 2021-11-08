@@ -167,7 +167,7 @@ int main(int argc, char* argv[]) {
     fds[1].events = POLLIN; // watched event -- input
 
     /* Wait for events and/or terminal input */
-    printf("Waiting for events\n");
+    printf("Waiting for events\n\n");
     while (1) {
 
         poll_num = poll(fds, nfds, -1); // 2 -- amount of file descriptions; -1 -- infinity waiting time
