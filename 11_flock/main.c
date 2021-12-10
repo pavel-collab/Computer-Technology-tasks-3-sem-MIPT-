@@ -9,8 +9,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-// будем считать, что программа запускается не более 1000 раз
-int N_LENGTH = 4;
+// будем считать, что программа запускается не более 99999 раз
+int N_LENGTH = 5;
 
 // функция для получения полного пути к файлу
 char* get_path(char* exepath) {
@@ -59,21 +59,24 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    struct flock lock;
     /* Initialize the flock structure. */
-    memset(&lock, 0, sizeof(lock));
+    struct flock lock = {0};
 
-    lock.l_type = F_RDLCK;
     /* Place a read lock on the file. */
-    if (fcntl(fd, F_SETLKW, &lock) == -1 && (errno == EACCES || errno == EAGAIN)) {
+    lock.l_type = F_RDLCK;
+
+    //? почему не работает первая ветка условного оператора
+    errno = 0;
+    int error_state = fcntl(fd, F_SETLK, &lock);
+    if (error_state == -1 && (errno == EACCES || errno == EAGAIN)) {
         status(&lock);
     }
-    else if (fcntl(fd, F_SETLKW, &lock) == -1) {
+    else if (error_state == -1) {
         perror("fcntl()");
         close(fd);
         return -1;
     }
-
+        
     char* buf = (char*) calloc(N_LENGTH, sizeof(char));
 
     size_t read_sym = read(fd, buf, N_LENGTH);
@@ -85,7 +88,7 @@ int main(int argc, char* argv[]) {
     }
 
     int count = atoi(buf);
-    count+=1;
+    count += 1;
 
     // устанавливаем смещение в начало файла
     if (lseek(fd, 0, SEEK_SET) == -1) {
@@ -102,6 +105,8 @@ int main(int argc, char* argv[]) {
         free(buf);
         return -1;
     }
+
+    // sleep(5);
 
     /* Release the lock. */
     lock.l_type = F_UNLCK;
