@@ -49,6 +49,8 @@ int main(int argc, char* argv[]) {
     
     char exepath[PATH_MAX + 1] = {0};
     char* full_programm_name = get_path(exepath);
+    // printf("full_programm_name = %s\n", full_programm_name);
+    // printf("%s\n", argv[0]);
 
     // открывем файл на чтение и запись
     int fd = open("counter.txt", O_RDWR);
@@ -85,6 +87,7 @@ int main(int argc, char* argv[]) {
     int count = atoi(buf);
     count+=1;
 
+    // устанавливаем смещение в начало файла
     if (lseek(fd, 0, SEEK_SET) == -1) {
         perror("lseek()");
         close(fd);
@@ -92,6 +95,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
+    // записываем новое значение
     if (dprintf(fd, "%d", count) < 0) {
         perror("Failed write to file");
         close(fd);
@@ -108,6 +112,3 @@ int main(int argc, char* argv[]) {
     free(buf);
     return 0;
 }
-
-//* запустили программу -> установили блокировку для других процессов на чтение и на запись -> 
-//* увеличили счетчик на 1 -> сняли блокировку
