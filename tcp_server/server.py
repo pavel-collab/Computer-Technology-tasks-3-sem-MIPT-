@@ -1,4 +1,3 @@
-# протокол udp -- каждая посылка это 1 пакет
 import socket
 from datetime import datetime
 

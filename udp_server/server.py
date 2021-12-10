@@ -26,7 +26,7 @@ try:
 
         for client_addr in clients:
             reply = 'message is recieved from %s | time = %s\n' %(adr_info, datetime.now())
-            sct.sendto(bytes(reply.encode('utf-8')), client_addr)
+            sct.sendto(reply.encode('utf-8'), client_addr)
 
 except KeyboardInterrupt:
     print('\nend of listening')
