@@ -9,12 +9,18 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-void PrintInfo(char* q_name, struct mq_attr* q_inf) {
+void PrintInfo(const char* q_name, struct mq_attr* q_inf) {
     printf("queue name:                %s\n", q_name);
     printf("queue flags :              %ld\n", q_inf->mq_flags);
     printf("Max message amount :       %ld\n", q_inf->mq_maxmsg);
     printf("Max message size (bytes) : %ld (%.1f pages)\n", q_inf->mq_msgsize, round(q_inf->mq_msgsize/4096));
     printf("Current message amount :   %ld\n", q_inf->mq_curmsgs);
+}
+
+volatile int g_last_signal;
+
+void sig_handler(int signum) {
+    g_last_signal = signum;
 }
 
 int main(int argc, char* argv[]) {
@@ -25,7 +31,7 @@ int main(int argc, char* argv[]) {
     }
 
     // quque creating
-    mqd_t queue = mq_open(argv[1], O_RDWR | O_CREAT, 0600, NULL);
+    mqd_t queue = mq_open(argv[1], O_RDWR | O_CREAT, 0622, NULL);
     if (queue == (mqd_t) -1) {
         perror("mq_open");
         return 1;
@@ -33,12 +39,11 @@ int main(int argc, char* argv[]) {
 
     // get info
     struct mq_attr q_inf;
-    if (mq_getattr(queue, &q_inf) == -1) {
-        perror("mq_getattr");
-    }
+    mq_getattr(queue, &q_inf);
 
+    long mq_msgsize = q_inf.mq_msgsize;
     // allocate buffer for message
-    char* buf = (char*) malloc(q_inf.mq_msgsize);
+    char* buf = (char*) malloc(mq_msgsize + 1);
     if (buf == NULL) {
         perror("malloc");
         return -1;
@@ -46,22 +51,25 @@ int main(int argc, char* argv[]) {
 
     while (1) {
 
-        long message = mq_receive(queue, buf, q_inf.mq_msgsize, NULL);
-        if (message == -1) {
+        size_t message = mq_receive(queue, buf, mq_msgsize, NULL);
+        if (message == (size_t) -1) {
             perror("mq_receive");
+            free(buf);
             return -1;
         }
-
-        if (write(STDOUT_FILENO, buf, message) == -1) {
-            perror("write");
-            return -1;
-        }
-        write(STDOUT_FILENO, "\n", 1);
 
         // return
-        if (!strncmp(buf, "exit", 4)) {
+        if (message == 4 && !strncmp(buf, "exit", 4)) {
             break;
         }
+
+        buf[message] = '\n';
+        if (write(STDOUT_FILENO, buf, message + 1) == -1) {
+            perror("write");
+            free(buf);
+            return -1;
+        }
+
     }  
 
     // remove queue

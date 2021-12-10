@@ -1,4 +1,5 @@
 //* gcc -o client -Werror -Wall -Wextra -Wpedantic client.c -lrt
+//! each queue has specified name: /somename
 
 #include <fcntl.h>           /* For O_* constants */
 #include <sys/stat.h>        /* For mode constants */
@@ -19,11 +20,6 @@ int main(int argc, char* argv[]) {
     if (queue == (mqd_t) -1) {
         perror("mq_open");
         return 1;
-    }
-    // get info
-    struct mq_attr q_inf;
-    if (mq_getattr(queue, &q_inf) == -1) {
-        perror("mq_getattr");
     }
 
     // send message
