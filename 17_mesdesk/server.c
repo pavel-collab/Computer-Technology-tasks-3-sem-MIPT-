@@ -8,6 +8,17 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <signal.h>
+
+volatile int cought_signum = -1;
+// простой обработчик
+void handler(int signum) {
+    cought_signum = signum;
+    printf("\tGot signal [%d]\n", cought_signum);
+    printf("end of listening\n");
+    //! не чистим ресурсы!!!
+    exit(signum);
+}
 
 void PrintInfo(const char* q_name, struct mq_attr* q_inf) {
     printf("queue name:                %s\n", q_name);
@@ -29,6 +40,17 @@ int main(int argc, char* argv[]) {
         printf("Usage %s /queue_name\n", argv[0]);
         return 1;
     }
+
+    // докидываем обработчик сигналов
+    // --------------------------------------------------------------------------------------------
+    struct sigaction int_handler = {0};
+    // функция заполняет буффуер, на который ссылается указатель, нулями
+
+    int_handler.sa_handler = handler;
+    int_handler.sa_flags = SA_RESTART;
+    sigaction(SIGINT, &int_handler, NULL); // SIGINT -> ^c
+    sigaction(SIGTSTP, &int_handler, NULL); // SIGTSTP -> ^z
+    // --------------------------------------------------------------------------------------------
 
     // quque creating
     mqd_t queue = mq_open(argv[1], O_RDWR | O_CREAT, 0622, NULL);
@@ -54,24 +76,17 @@ int main(int argc, char* argv[]) {
         size_t message = mq_receive(queue, buf, mq_msgsize, NULL);
         if (message == (size_t) -1) {
             perror("mq_receive");
-            free(buf);
-            return -1;
-        }
-
-        // return
-        if (message == 4 && !strncmp(buf, "exit", 4)) {
             break;
         }
 
         buf[message] = '\n';
         if (write(STDOUT_FILENO, buf, message + 1) == -1) {
             perror("write");
-            free(buf);
-            return -1;
+            break;
         }
-
     }  
 
+    printf("clean resources\n");
     // remove queue
     mq_unlink(argv[1]);
     // cleanup:
