@@ -35,3 +35,10 @@ except KeyboardInterrupt:
 # in cobsol: whois <ip-adr>
 # in cobsol: ip a
 # nc -u <ip-adr> <port>
+
+'''
+Задание:
+UDP-сервер времени
+На пакет с запросом определенного формата отвечает пакетом со строкой с текущим временем
+формат: %y-%m-%d %h-%m-%s/n
+'''

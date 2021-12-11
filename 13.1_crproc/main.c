@@ -31,7 +31,6 @@ int main(int argc, char *argv[]) {
 
     } 
     else {                      /* Code executed by parent */
-
         proc_info("Parent");
         do {
             w = waitpid(cpid, &wstatus, WUNTRACED | WCONTINUED);
@@ -53,14 +52,13 @@ int main(int argc, char *argv[]) {
                 printf("continued\n");
             }
 
+            // core dump
+            if (WCOREDUMP(wstatus)) {
+                printf("child proc has cause a core dump\n");
+            }
+
         } while (!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
         // крутимся в цикле, пока дочерний процесс не завершиться (успешно или по сигналу)
-
-        #ifdef WCOREDUMP
-        if (WCOREDUMP(wstatus)) {
-            printf("child proc has cause a core dump\n");
-        }
-        #endif 
 
         exit(EXIT_SUCCESS);
     }

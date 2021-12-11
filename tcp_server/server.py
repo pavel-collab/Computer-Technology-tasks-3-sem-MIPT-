@@ -38,3 +38,10 @@ except KeyboardInterrupt:
 # in cobsol: whois <ip-adr>
 # in cobsol: ip a
 # nc -u <ip-adr> <port>
+
+'''
+Задание:
+TCP-сервер времени
+Принимает соединение, раз в секунду в каждое живое соединение отправляет
+строку с текущим временем, формат: %y-%m-%d %h-%m-%s/n
+'''
