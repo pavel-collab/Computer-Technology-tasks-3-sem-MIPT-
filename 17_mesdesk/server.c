@@ -28,11 +28,11 @@ void PrintInfo(const char* q_name, struct mq_attr* q_inf) {
     printf("Current message amount :   %ld\n", q_inf->mq_curmsgs);
 }
 
-volatile int g_last_signal;
+// volatile int g_last_signal;
 
-void sig_handler(int signum) {
-    g_last_signal = signum;
-}
+// void sig_handler(int signum) {
+//     g_last_signal = signum;
+// }
 
 int main(int argc, char* argv[]) {
 
@@ -48,8 +48,14 @@ int main(int argc, char* argv[]) {
 
     int_handler.sa_handler = handler;
     int_handler.sa_flags = SA_RESTART;
-    sigaction(SIGINT, &int_handler, NULL); // SIGINT -> ^c
-    sigaction(SIGTSTP, &int_handler, NULL); // SIGTSTP -> ^z
+    if (sigaction(SIGINT, &int_handler, NULL)) {
+        perror("sigaction(SIGTSTP)");
+        return -1;
+    } // SIGINT -> ^c
+    if (sigaction(SIGTSTP, &int_handler, NULL)) {
+        perror("sigaction(SIGTSTP)");
+        return -1;
+    } // SIGTSTP -> ^z
     // --------------------------------------------------------------------------------------------
 
     // quque creating

@@ -6,6 +6,8 @@ sandbox*
 
 out
 test
+server
+client
 
 test.txt
 test1.txt
