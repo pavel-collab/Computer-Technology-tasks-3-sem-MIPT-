@@ -12,7 +12,7 @@
 #include <time.h>
 #include <string.h>
 
-#define DEBUG
+// #define DEBUG
 
 size_t TIME_SIZE = sizeof("dd/mm/yy hh:mm:ss (UTC)");
 
@@ -22,7 +22,7 @@ void handler(int signum) {
     cought_signum = signum;
     dprintf(fileno(stdout), "\tGot signal [%d]\n", cought_signum);
     //! не чистим ресурсы!!!
-    exit(signum);
+    // exit(signum);
 }
 
 int get_cur_time(char* time_str) {
@@ -41,7 +41,7 @@ int get_cur_time(char* time_str) {
     }
 
     if (strftime(time_str, TIME_SIZE, "%x %X (UTC)", &timeinfo) == 0) {
-        perror("localtime_r()");
+        perror("strftime");
         return -1;
     }
 
@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
     }
 
     char* time_str = (char*) calloc(TIME_SIZE, sizeof(char));
-    while (1) {
+    while (cought_signum == -1) {
 
         if (get_cur_time(time_str) == -1) {
             perror("get_cur_time");
@@ -148,6 +148,9 @@ int main(int argc, char *argv[]) {
         sleep(2);
     }
 
+    #ifdef DEBUG
+        printf("freeing resources\n");
+    #endif
     // удаляем область разделяемой памяти
     shm_unlink(shm_name);
     // удаляем семафор
