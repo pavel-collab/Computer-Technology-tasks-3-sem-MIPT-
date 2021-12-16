@@ -12,7 +12,7 @@
 #include <time.h>
 #include <string.h>
 
-#define DEBUG
+// #define DEBUG
 
 size_t TIME_SIZE = sizeof("dd/mm/yy hh:mm:ss UTC+i (XXX)");
 
