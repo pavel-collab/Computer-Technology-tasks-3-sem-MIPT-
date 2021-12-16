@@ -12,48 +12,10 @@
 // будем считать, что программа запускается не более 99999 раз
 int N_LENGTH = 5;
 
-// функция для получения полного пути к файлу
-char* get_path(char* exepath) {
-    char arg1[20];
-
-    sprintf(arg1, "/proc/%d/exe", getpid());
-    readlink(arg1, exepath, 1024);
-    return exepath;
-}
-
-void status(struct flock *lock) {
-
-    printf("Status: ");
-
-    switch(lock->l_type){
-
-        case F_UNLCK:
-            printf("F_UNLCK (unlocking)\n");
-            break;
-
-        case F_RDLCK:
-            printf("F_RDLCK (pid: %d) (read lock)\n", lock->l_pid);
-            break;
-
-        case F_WRLCK:
-            printf("F_WRLCK (pid: %d) (write lock)\n", lock->l_pid);
-            break;
-
-        default : break;
-
-    }
-
-}
-
 int main(int argc, char* argv[]) {
-    
-    char exepath[PATH_MAX + 1] = {0};
-    char* full_programm_name = get_path(exepath);
-    // printf("full_programm_name = %s\n", full_programm_name);
-    // printf("%s\n", argv[0]);
 
     // открывем файл на чтение и запись
-    int fd = open("counter.txt", O_RDWR);
+    int fd = open("counter.txt", O_RDWR | O_CREAT, 0666);
     if (fd == -1) {
         perror("open()");
         return -1;
@@ -62,23 +24,23 @@ int main(int argc, char* argv[]) {
     /* Initialize the flock structure. */
     struct flock lock = {0};
 
+    //! использовать O_WRLCK и вообще можно использовать просто flock
+    //! либо заполнять все поля структуры
     /* Place a read lock on the file. */
     lock.l_type = F_RDLCK;
 
     //? почему не работает первая ветка условного оператора
     errno = 0;
     int error_state = fcntl(fd, F_SETLK, &lock);
-    if (error_state == -1 && (errno == EACCES || errno == EAGAIN)) {
-        status(&lock);
-    }
-    else if (error_state == -1) {
+    if (error_state == -1 && errno == EACCES && errno == EAGAIN) {
         perror("fcntl()");
         close(fd);
         return -1;
     }
-        
-    char* buf = (char*) calloc(N_LENGTH, sizeof(char));
+    
 
+    char buf[N_LENGTH + 1];
+    buf[N_LENGTH] = '\0';
     size_t read_sym = read(fd, buf, N_LENGTH);
     if (read_sym == -1) {
         perror("read()");
@@ -94,7 +56,6 @@ int main(int argc, char* argv[]) {
     if (lseek(fd, 0, SEEK_SET) == -1) {
         perror("lseek()");
         close(fd);
-        free(buf);
         return -1;
     }
 
@@ -102,18 +63,13 @@ int main(int argc, char* argv[]) {
     if (dprintf(fd, "%d", count) < 0) {
         perror("Failed write to file");
         close(fd);
-        free(buf);
         return -1;
     }
-
-    // sleep(5);
 
     /* Release the lock. */
     lock.l_type = F_UNLCK;
     fcntl(fd, F_SETLKW, &lock);
-    status(&lock);
 
     close(fd);
-    free(buf);
     return 0;
 }

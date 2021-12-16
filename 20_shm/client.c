@@ -17,7 +17,6 @@ volatile int cought_signum = -1;
 void handler(int signum) {
     cought_signum = signum;
     dprintf(fileno(stdout), "\tGot signal [%d]\n", cought_signum);
-    //! не чистим ресурсы!!!
     exit(signum);
 }
 
@@ -89,16 +88,10 @@ int main(int argc, char *argv[]) {
     }
 
     while (1) {
-        if (sem_wait(sem) == -1) {
-            perror("sem_wait()");
-            break;
-        }
+        sem_wait(sem) == -1;
         write(fileno(stdout), addr, sb.st_size);
         printf("\n");
-        if (sem_post(sem) == -1) {
-            perror("sem_post()");
-            break;
-        }
+        sem_post(sem) == -1;
         sleep(2);
     }
     

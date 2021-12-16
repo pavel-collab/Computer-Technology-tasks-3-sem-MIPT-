@@ -53,13 +53,14 @@ int main(int argc, char *argv[]) {
             }
 
             // core dump
+            //! только внутри ветки завершения по сигналу посмотреть когда можно вызывать эту ветку
             if (WCOREDUMP(wstatus)) {
                 printf("child proc has cause a core dump\n");
             }
 
         } while (!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
         // крутимся в цикле, пока дочерний процесс не завершиться (успешно или по сигналу)
-
+        //! писать while(1) + break -> избавимся от двойной проверки
         exit(EXIT_SUCCESS);
     }
 }

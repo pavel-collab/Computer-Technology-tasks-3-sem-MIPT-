@@ -19,23 +19,23 @@ int main() {
         perror("signal(SIGINT)");
         return -1;
     } // ^c
-    if (signal(SIGQUIT, sig_handler)) {
+    if (signal(SIGQUIT, sig_handler) == SIG_ERR) {
         perror("signal(SIGQUIT)");
         return -1;
     } // ^/
-    if (signal(SIGTSTP, sig_handler)) {
+    if (signal(SIGTSTP, sig_handler) == SIG_ERR) {
         perror("signal(SIGTSTP)");
         return -1;
     } // ^Z 
-    if (signal(SIGHUP, sig_handler)) {
+    if (signal(SIGHUP, sig_handler) == SIG_ERR) {
         perror("signal(SIGHUP)");
         return -1;
     } // обрыв соединения
-    if (signal(SIGTERM, sig_handler)) {
+    if (signal(SIGTERM, sig_handler) == SIG_ERR) {
         perror("signal(SIGTERM)");
         return -1;
     } // завершение работы
-    
+    //* вешать обработчики в цикле от 0 до N_SIG (какая-то константа)
     printf("to discover process pid, in another console use:\n \tps ux\n");
     printf("to kill programm, in another console use:\n \tkill -9 <pid>\n\n");
     while(1) {

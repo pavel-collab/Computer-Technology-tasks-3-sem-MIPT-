@@ -14,15 +14,13 @@
 
 // #define DEBUG
 
-size_t TIME_SIZE = sizeof("dd/mm/yy hh:mm:ss (UTC)");
+size_t TIME_SIZE = sizeof("dd/mm/yy hh:mm:ss UTC+i (XXX)");
 
 volatile int cought_signum = -1;
 // простой обработчик
 void handler(int signum) {
     cought_signum = signum;
     dprintf(fileno(stdout), "\tGot signal [%d]\n", cought_signum);
-    //! не чистим ресурсы!!!
-    // exit(signum);
 }
 
 int get_cur_time(char* time_str) {
@@ -130,10 +128,7 @@ int main(int argc, char *argv[]) {
             break;
         }
 
-        if (sem_wait(sem) == -1) {
-            perror("sem_wait()");
-            break;
-        }
+        sem_wait(sem) == -1;
 
         memcpy(addr, time_str, strlen(time_str)); /* Copy string to shared memory */
         #ifdef DEBUG
@@ -141,10 +136,7 @@ int main(int argc, char *argv[]) {
             printf("copying %ld bytes\n", (long) strlen(time_str));
         #endif
 
-        if (sem_post(sem) == -1) {
-            perror("sem_post()");
-            break;
-        }
+        sem_post(sem) == -1;
         sleep(2);
     }
 
