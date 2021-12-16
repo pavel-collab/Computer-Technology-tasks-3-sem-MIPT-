@@ -9,8 +9,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-// будем считать, что программа запускается не более 99999 раз
-int N_LENGTH = 5;
+// будем считать, что программа запускается не более 99999999999 раз
+int N_LENGTH = sizeof("99999999999");
 
 int main(int argc, char* argv[]) {
 
@@ -21,54 +21,40 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    /* Initialize the flock structure. */
-    struct flock lock = {0};
+    char buf[N_LENGTH];
+    memset(buf, 0, sizeof(buf));
+    int counter = 1;
 
-    //! использовать O_WRLCK и вообще можно использовать просто flock
-    //! либо заполнять все поля структуры
-    /* Place a read lock on the file. */
-    lock.l_type = F_RDLCK;
+    // Locking file for reading and writing
+    lockf(fd, F_LOCK, 0);
 
-    //? почему не работает первая ветка условного оператора
-    errno = 0;
-    int error_state = fcntl(fd, F_SETLK, &lock);
-    if (error_state == -1 && errno == EACCES && errno == EAGAIN) {
-        perror("fcntl()");
-        close(fd);
-        return -1;
-    }
-    
-
-    char buf[N_LENGTH + 1];
-    buf[N_LENGTH] = '\0';
-    size_t read_sym = read(fd, buf, N_LENGTH);
-    if (read_sym == -1) {
-        perror("read()");
-        close(fd);
-        free(buf);
-        return -1;
-    }
-
-    int count = atoi(buf);
-    count += 1;
-
-    // устанавливаем смещение в начало файла
-    if (lseek(fd, 0, SEEK_SET) == -1) {
-        perror("lseek()");
+    long int bytes_read = read(fd, buf, N_LENGTH);
+    if(bytes_read < 0) {
+        perror("read");
+        lockf(fd, F_ULOCK, 0);
         close(fd);
         return -1;
     }
 
-    // записываем новое значение
-    if (dprintf(fd, "%d", count) < 0) {
-        perror("Failed write to file");
+    sleep(5);
+
+    char number[bytes_read > 0 ? (bytes_read + 1): 2];
+    memset(number, 0, sizeof(number));
+
+    counter += atoi(buf);
+
+    printf("The program was executed %d times\n", counter);
+    sprintf(number, "%d\n", counter);
+
+    if(pwrite(fd, number, sizeof(number), 0) < 0) {
+        perror("write");
+        lockf(fd, F_ULOCK, 0);
         close(fd);
         return -1;
     }
 
-    /* Release the lock. */
-    lock.l_type = F_UNLCK;
-    fcntl(fd, F_SETLKW, &lock);
+    // Unlocking and closing file after work is done
+    lockf(fd, F_ULOCK, 0);
 
     close(fd);
     return 0;
