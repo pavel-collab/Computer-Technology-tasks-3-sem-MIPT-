@@ -12,17 +12,15 @@
 #include <time.h>
 #include <string.h>
 
-// #define DEBUG
+#define DEBUG
 
-size_t TIME_SIZE = sizeof("dd/mm/yy hh:mm:ss (UTC)");
+size_t TIME_SIZE = sizeof("dd/mm/yy hh:mm:ss UTC+i (XXX)");
 
 volatile int cought_signum = -1;
 // простой обработчик
 void handler(int signum) {
     cought_signum = signum;
     dprintf(fileno(stdout), "\tGot signal [%d]\n", cought_signum);
-    //! не чистим ресурсы!!!
-    // exit(signum);
 }
 
 int get_cur_time(char* time_str) {
@@ -50,6 +48,8 @@ int get_cur_time(char* time_str) {
 
 int main(int argc, char *argv[]) {
 
+    const char* sem_name = "named_sem";
+
     // докидываем обработчик сигналов
     // --------------------------------------------------------------------------------------------
     struct sigaction int_handler = {0};
@@ -70,27 +70,12 @@ int main(int argc, char *argv[]) {
     } // завершение работы
     // --------------------------------------------------------------------------------------------
 
-    // реализуем неименованный семафор
-    // поскольку семафор используется не для родственных процессов
-    // он должен располагаться в области разделяемой памяти
-    // ===========================================================================================
-    const char* sem_shm = "/sem_shm";
-    sem_t *sem;
-    int sem_fd;
-
-    sem_fd = shm_open(sem_shm, O_CREAT | O_RDWR, 0666);
-    if (sem_fd == -1) {
-        perror("shm_open(sem_fd)");
+    // заводим семафор
+    sem_t* sem = sem_open(sem_name, O_CREAT, 0666, 1);
+    if (sem == SEM_FAILED) {
+        perror("sem_open()");
         return -1;
     }
-
-    ftruncate(sem_fd, sizeof(sem_t));
-    sem = (sem_t*) mmap(0, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED, sem_fd, 0);
-    if (sem_init(sem, 1, 1) == -1) {
-        perror("sem_init()");
-        return -1;
-    }
-    // ===========================================================================================
 
     const char* shm_name = "/clock";
 
@@ -130,21 +115,13 @@ int main(int argc, char *argv[]) {
             break;
         }
 
-        if (sem_wait(sem) == -1) {
-            perror("sem_wait()");
-            break;
-        }
-
+        sem_wait(sem) == -1;
         memcpy(addr, time_str, strlen(time_str)); /* Copy string to shared memory */
         #ifdef DEBUG
             printf("%s\n", time_str);
             printf("copying %ld bytes\n", (long) strlen(time_str));
         #endif
-
-        if (sem_post(sem) == -1) {
-            perror("sem_post()");
-            break;
-        }
+        sem_post(sem) == -1;
         sleep(2);
     }
 
@@ -153,10 +130,10 @@ int main(int argc, char *argv[]) {
     #endif
     // удаляем область разделяемой памяти
     shm_unlink(shm_name);
+    // закрываем семафор
+    sem_close(sem);
     // удаляем семафор
-    sem_destroy(sem);
-    // удаляем область разделяемой памяти
-    shm_unlink(sem_shm);
+    sem_unlink(sem_name);
 
     free(time_str);
     return 0;

@@ -73,7 +73,7 @@ int main() {
         #ifdef SIMPLE_HANDLER
             printf("\tGot signal [%d]\n", cought_signum);
         #else
-            printf("\tGot signal [%d] from proces [%d]\n", cought_signum, proc_pid);
+            printf("\tGot signal [%d] from process [%d]\n", cought_signum, proc_pid);
         #endif
     }
 

@@ -17,11 +17,12 @@ volatile int cought_signum = -1;
 void handler(int signum) {
     cought_signum = signum;
     dprintf(fileno(stdout), "\tGot signal [%d]\n", cought_signum);
-    //! не чистим ресурсы!!!
     exit(signum);
 }
 
 int main(int argc, char *argv[]) {
+
+    const char* sem_name = "named_sem";
 
     // докидываем обработчик сигналов
     // --------------------------------------------------------------------------------------------
@@ -42,23 +43,14 @@ int main(int argc, char *argv[]) {
             return -1;
     } // завершение работы
     // --------------------------------------------------------------------------------------------
-
-    // получаем неименованный семафор
-    // ===========================================================================================
-    const char* sem_shm = "/sem_shm";
-    sem_t *sem;
-    int sem_fd;
-
-    sem_fd = shm_open(sem_shm, O_CREAT | O_RDWR, 0666);
-    if (sem_fd == -1) {
-        perror("shm_open(sem_fd)");
+    
+    // 
+    sem_t* sem = sem_open(sem_name, O_EXCL);
+    if (sem == SEM_FAILED) {
+        perror("sem_open()");
         return -1;
     }
 
-    ftruncate(sem_fd, sizeof(sem_t));
-    sem = (sem_t*) mmap(0, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED, sem_fd, 0);
-    // ===========================================================================================
-    
     const char* shm_name = "/clock";
     int fd;
     char* addr;
@@ -89,16 +81,10 @@ int main(int argc, char *argv[]) {
     }
 
     while (1) {
-        if (sem_wait(sem) == -1) {
-            perror("sem_wait()");
-            break;
-        }
+        sem_wait(sem) == -1;
         write(fileno(stdout), addr, sb.st_size);
         printf("\n");
-        if (sem_post(sem) == -1) {
-            perror("sem_post()");
-            break;
-        }
+        sem_post(sem) == -1;
         sleep(2);
     }
     

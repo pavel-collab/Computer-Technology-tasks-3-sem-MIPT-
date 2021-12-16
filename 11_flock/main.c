@@ -9,111 +9,53 @@
 #include <string.h>
 #include <stdlib.h>
 
-// будем считать, что программа запускается не более 99999 раз
-int N_LENGTH = 5;
-
-// функция для получения полного пути к файлу
-char* get_path(char* exepath) {
-    char arg1[20];
-
-    sprintf(arg1, "/proc/%d/exe", getpid());
-    readlink(arg1, exepath, 1024);
-    return exepath;
-}
-
-void status(struct flock *lock) {
-
-    printf("Status: ");
-
-    switch(lock->l_type){
-
-        case F_UNLCK:
-            printf("F_UNLCK (unlocking)\n");
-            break;
-
-        case F_RDLCK:
-            printf("F_RDLCK (pid: %d) (read lock)\n", lock->l_pid);
-            break;
-
-        case F_WRLCK:
-            printf("F_WRLCK (pid: %d) (write lock)\n", lock->l_pid);
-            break;
-
-        default : break;
-
-    }
-
-}
+// будем считать, что программа запускается не более 99999999999 раз
+int N_LENGTH = sizeof("99999999999");
 
 int main(int argc, char* argv[]) {
-    
-    char exepath[PATH_MAX + 1] = {0};
-    char* full_programm_name = get_path(exepath);
-    // printf("full_programm_name = %s\n", full_programm_name);
-    // printf("%s\n", argv[0]);
 
     // открывем файл на чтение и запись
-    int fd = open("counter.txt", O_RDWR);
+    int fd = open("counter.txt", O_RDWR | O_CREAT, 0666);
     if (fd == -1) {
         perror("open()");
         return -1;
     }
 
-    /* Initialize the flock structure. */
-    struct flock lock = {0};
+    char buf[N_LENGTH];
+    memset(buf, 0, sizeof(buf));
+    int counter = 1;
 
-    /* Place a read lock on the file. */
-    lock.l_type = F_RDLCK;
+    // Locking file for reading and writing
+    lockf(fd, F_LOCK, 0);
 
-    //? почему не работает первая ветка условного оператора
-    errno = 0;
-    int error_state = fcntl(fd, F_SETLK, &lock);
-    if (error_state == -1 && (errno == EACCES || errno == EAGAIN)) {
-        status(&lock);
-    }
-    else if (error_state == -1) {
-        perror("fcntl()");
+    long int bytes_read = read(fd, buf, N_LENGTH);
+    if(bytes_read < 0) {
+        perror("read");
+        lockf(fd, F_ULOCK, 0);
         close(fd);
         return -1;
     }
-        
-    char* buf = (char*) calloc(N_LENGTH, sizeof(char));
 
-    size_t read_sym = read(fd, buf, N_LENGTH);
-    if (read_sym == -1) {
-        perror("read()");
+    sleep(5);
+
+    char number[bytes_read > 0 ? (bytes_read + 1): 2];
+    memset(number, 0, sizeof(number));
+
+    counter += atoi(buf);
+
+    printf("The program was executed %d times\n", counter);
+    sprintf(number, "%d\n", counter);
+
+    if(pwrite(fd, number, sizeof(number), 0) < 0) {
+        perror("write");
+        lockf(fd, F_ULOCK, 0);
         close(fd);
-        free(buf);
         return -1;
     }
 
-    int count = atoi(buf);
-    count += 1;
-
-    // устанавливаем смещение в начало файла
-    if (lseek(fd, 0, SEEK_SET) == -1) {
-        perror("lseek()");
-        close(fd);
-        free(buf);
-        return -1;
-    }
-
-    // записываем новое значение
-    if (dprintf(fd, "%d", count) < 0) {
-        perror("Failed write to file");
-        close(fd);
-        free(buf);
-        return -1;
-    }
-
-    // sleep(5);
-
-    /* Release the lock. */
-    lock.l_type = F_UNLCK;
-    fcntl(fd, F_SETLKW, &lock);
-    status(&lock);
+    // Unlocking and closing file after work is done
+    lockf(fd, F_ULOCK, 0);
 
     close(fd);
-    free(buf);
     return 0;
 }
