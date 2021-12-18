@@ -15,8 +15,9 @@ sources.register(sys.stdin, select.POLLIN)
 sources.register(sct, select.POLLIN)
 
 print('ready for sending messages')
-while True:
-    try:
+print('to get current time send message \'get datetime\'\n')
+try:
+    while True:
         for fd, event in sources.poll():
             # если прилетает из stdin, то формируем и отправляем посылку
             if fd == sys.stdin.fileno():
@@ -26,7 +27,6 @@ while True:
             else:
                 reply = sct.recv(4096).decode('utf-8').strip()
                 print(reply)
-    except KeyboardInterrupt:
-        print('\nend of sending messages')
-        sct.close()
-        break
+except KeyboardInterrupt:
+    print('\nend of sending messages')
+    sct.close()
