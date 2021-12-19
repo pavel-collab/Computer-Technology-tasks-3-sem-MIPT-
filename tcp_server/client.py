@@ -9,7 +9,6 @@ sct = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP)
 sct.connect((MY_IP, PORT))
 
 try:
-
     sct.sendall(b'GET / HTTP/1.1\r\nHost: mipt.ru\r\nConnection: close\r\n\r\n')
     sct.shutdown(socket.SHUT_WR)
     reply = b''
