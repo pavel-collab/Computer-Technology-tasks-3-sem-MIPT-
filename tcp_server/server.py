@@ -12,8 +12,8 @@ sct.listen(10)
 # создаем словарь
 clients = {}
 
+print('listening on port: %d' %PORT)
 try:
-    print('listening on port: %d' %PORT)
     while True:
         client_sock, client_addr = sct.accept()
         clients[client_addr] = client_sock
@@ -25,7 +25,7 @@ try:
                 break
             request += buf
 
-        reply = 'message is recieved from %s | time = %s\r\n' %(client_addr, datetime.now())
+        reply = 'message is recieved from %s | time = %s\r\n' %(client_addr, datetime.today())
         client_sock.sendall(bytes(reply.encode('utf-8')))
         print('answer is sent')
 
