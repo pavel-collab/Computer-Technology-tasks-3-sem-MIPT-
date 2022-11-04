@@ -1,7 +1,7 @@
 import socket
 from datetime import datetime
 
-PORT = 7555
+PORT = 8000
 
 sct = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP)
 # фиксируем локальный конец

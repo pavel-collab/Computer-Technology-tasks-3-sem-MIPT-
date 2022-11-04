@@ -2,8 +2,11 @@ import select
 import socket
 import sys
 
-PORT = 7555
-MY_IP = '192.168.2.115'
+PORT = 8000
+
+with open('ip', 'r') as f:
+    # читаем ip сервера из файла и исключаем '\n'
+    MY_IP = f.read()[:-1]
 
 sct = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP)
 sct.connect((MY_IP, PORT))
